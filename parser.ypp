@@ -1,0 +1,134 @@
+%{
+#include <iostream>
+#include <string>
+#include <memory>
+#include <vector>
+#include "memc.hpp"
+#include "structs.hpp"
+#include "code.hpp"
+
+int yylex();
+int yyparse();
+void yyerror(std::string er);
+//extern FILE *yyin;
+extern int yylineno;
+
+std::shared_ptr<MemoryController> vars = std::make_shared<MemoryController>();
+std::shared_ptr<Coder> code = std::make_shared<Coder>(vars);
+
+%}
+
+%union {
+  std::string * str;
+  long long number;
+}
+//Tokens
+//%start program
+%token <str> DECLARE BEGINA END
+%token <str> IF WHILE DO
+%token <str> FOR 
+%token <str> THEN ELSE ENDIF FROM TO DOWNTO ENDFOR ENDWHILE ENDDO
+%token <str> READ WRITE       
+%token <str> LE GE LEQ GEQ EQ NEQ
+%token <str> ASSIGN
+%token <str> ERROR
+%token <str> pidentifier
+%token <number> num
+
+
+//Types
+%start program
+%type <number> value
+%type <number> identifier
+%type <str> condition
+//%type <string> declarations
+//%type <string> commands
+//%type <string> command
+%type <number> expression
+
+//Operators precedence
+%left PLUS MINUS
+%left TIMES DIV MOD
+%%      
+
+program:        DECLARE declarations BEGINA commands END { vars->printAll(); code->printVM();}                                                   
+                |
+                BEGINA commands END 
+;
+
+declarations:   declarations ',' pidentifier                { auto pid = $3; vars->declareVar(*pid); }
+                | declarations ',' pidentifier '(' num ':' num ')'                                                   
+                | pidentifier                               { auto pid = $1; vars->declareVar(*pid); }
+                | pidentifier '('num ':' num ')'
+;
+
+commands:       commands command
+                | command       
+;
+
+
+command:        identifier ASSIGN expression ';'         { auto index = $1; auto value = $3; code->assignValueToVar(index,value); }                                                       
+
+                
+                | IF condition THEN commands                                                             
+                  ELSE commands ENDIF                                                                
+
+                | IF condition THEN commands ENDIF                                                  
+
+                | WHILE condition DO                                                                                                                                                             
+                  commands ENDWHILE                                                        
+
+                | DO                                                                    
+                  commands WHILE condition ENDDO                                        
+                                                                                        
+                | FOR pidentifier FROM value TO value DO                                
+                        commands 
+                  ENDFOR              
+
+                | FOR pidentifier FROM value DOWNTO value DO                          
+                        commands 
+                  ENDFOR                                                     
+
+                | READ identifier ';'                                                     
+
+                | WRITE value ';'                                                       
+;
+
+expression:     value                 { $$ = $1; }                                                   
+                | value PLUS value    { $$ = $1 + $3;}                                                
+                | value MINUS value                                                      
+                | value TIMES value                                                       
+                | value DIV value                                                       
+                | value MOD value                                                      
+;
+
+condition:      value EQ value                                                        
+                | value NEQ value                                                     
+                | value LE value                                                      
+                | value GE value                                                      
+                | value LEQ value                                                     
+                | value GEQ value                                                     
+;
+
+value:          num                           { auto val = $1; code->loadValue(val); }                                                 
+                | identifier                  { auto index = $1; $$ = vars->getValueOfIndex(index); }                                                              
+;
+
+identifier:     pidentifier                           { $$ = vars->getIndexOfVar(*($1)); }                                                
+                | pidentifier '(' pidentifier ')'     { $$ = vars->getIndexOfVar(*($1)); }                                        
+                | pidentifier '(' num ')'             { $$ = vars->getIndexOfVar(*($1)); }                                       
+;
+
+
+%%
+
+void yyerror(std::string err){
+  std::cout << err;
+}
+
+int main(int argc, char** argv) {
+
+        yyparse();
+        
+        return 0;
+}

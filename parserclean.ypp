@@ -1,0 +1,126 @@
+%{
+#include <iostream>
+#include <string>
+#include <memory>
+#include <vector>
+
+int yylex();
+void yyerror(char * er);
+//extern FILE *yyin;
+extern int yylineno;
+
+%}
+
+%union {
+  char * str;
+  }
+//Tokens
+//%start program
+%token <str> DECLARE BEGINA END
+%token <str> IF WHILE DO
+%token <str> FOR 
+%token <str> THEN ELSE ENDIF FROM TO DOWNTO ENDFOR ENDWHILE ENDDO
+%token <str> READ WRITE       
+%token <str> LE GE LEQ GEQ EQ NEQ
+%token <str> ASSIGN
+%token <str> ERROR
+%token <str> pidentifier
+%token <str> num
+
+
+//Types
+%start program
+%type <str> value
+%type <str> identifier
+%type <str> condition
+%type <str> declarations
+%type <str> commands
+%type <str> command
+%type <str> expression
+
+//Operators precedence
+%left PLUS MINUS
+%left TIMES DIV MOD
+%%      
+
+program:        DECLARE declarations BEGINA commands END                                                       
+                |
+                BEGINA commands END
+;
+
+declarations:   declarations ',' pidentifier 
+                | declarations ',' pidentifier '(' num ':' num ')'                                                   
+                | pidentifier
+                | pidentifier '('num ':' num ')'
+;
+
+commands:       commands command
+                | command       
+;
+
+
+command:        identifier ASSIGN expression ';'                                                               
+
+                
+                | IF condition THEN commands                                                             
+                  ELSE commands ENDIF                                                                
+
+                | IF condition THEN commands ENDIF                                                  
+
+                | WHILE condition DO                                                                                                                                                             
+                  commands ENDWHILE                                                        
+
+                | DO                                                                    
+                  commands WHILE condition ENDDO                                        
+                                                                                        
+                | FOR pidentifier FROM value TO value DO                                
+                        commands 
+                  ENDFOR              
+
+                | FOR pidentifier FROM value DOWNTO value DO                          
+                        commands 
+                  ENDFOR                                                     
+
+                | READ identifier ';'                                                     
+
+                | WRITE value ';'                                                       
+;
+
+expression:     value                                                                   
+                | value PLUS value                                                      
+                | value MINUS value                                                      
+                | value TIMES value                                                       
+                | value DIV value                                                       
+                | value MOD value                                                      
+;
+
+condition:      value EQ value                                                        
+                | value NEQ value                                                     
+                | value LE value                                                      
+                | value GE value                                                      
+                | value LEQ value                                                     
+                | value GEQ value                                                     
+;
+
+value:          num                                                                    
+                | identifier                                                           
+;
+
+identifier:     pidentifier                                                             
+                | pidentifier '(' pidentifier ')'                                          
+                | pidentifier '(' num ')'                                                  
+;
+
+
+%%
+
+void yyerror(char * err){
+  printf(err);
+}
+
+int main(int argc, char** argv) {
+
+        yyparse();
+        
+        return 0;
+}
