@@ -39,7 +39,7 @@ std::shared_ptr<Coder> code = std::make_shared<Coder>(vars);
 //Types
 %start program
 %type <number> value
-%type <number> identifier
+%type <number> identifier //address of p
 %type <str> condition
 //%type <string> declarations
 //%type <string> commands
@@ -56,10 +56,10 @@ program:        DECLARE declarations BEGINA commands END { vars->printAll(); cod
                 BEGINA commands END 
 ;
 
-declarations:   declarations ',' pidentifier                { auto pid = $3; vars->declareVar(*pid); }
-                | declarations ',' pidentifier '(' num ':' num ')'                                                   
-                | pidentifier                               { auto pid = $1; vars->declareVar(*pid); }
-                | pidentifier '('num ':' num ')'
+declarations:   declarations ',' pidentifier                { auto pid = $3; code->declareVariable(*pid); }
+                | declarations ',' pidentifier '(' num ':' num ')'    {auto pid = $3; auto beg = $5; auto end = $7; code->declareArray(*pid,beg,end);}                                          
+                | pidentifier                               { auto pid = $1; code->declareVariable(*pid); }
+                | pidentifier '('num ':' num ')'  {auto pid = $1; auto beg = $3; auto end = $5; code->declareArray(*pid,beg,end);} 
 ;
 
 commands:       commands command
@@ -109,14 +109,15 @@ condition:      value EQ value
                 | value LEQ value                                                     
                 | value GEQ value                                                     
 ;
-
-value:          num                           { auto val = $1; code->loadValue(val); }                                                 
-                | identifier                  { auto index = $1; $$ = vars->getValueOfIndex(index); }                                                              
+  /*TODO probably might need MemBlock here later*/
+value:          num                           { auto val = $1; code->loadValue(val); $$ = $1; }                                                 
+                | identifier                  { auto index = $1; $$ = code->loadIdentifier(index); }                                                              
 ;
 
-identifier:     pidentifier                           { $$ = vars->getIndexOfVar(*($1)); }                                                
-                | pidentifier '(' pidentifier ')'     { $$ = vars->getIndexOfVar(*($1)); }                                        
-                | pidentifier '(' num ')'             { $$ = vars->getIndexOfVar(*($1)); }                                       
+identifier:     pidentifier                           { auto pid = $1; $$ = vars->getIndexOfVar(*(pid)); }                                                
+                | pidentifier '(' pidentifier ')'     { auto pid2 = $3; auto pid = $1; auto res = vars->getIndexOfVar(*pid2);
+                                                          $$ = vars->getIndexOfArrayElement(*pid,res); }                                        
+                | pidentifier '(' num ')'             { auto pid = $1; auto val = $3; $$ = vars->getIndexOfArrayElement(*pid,val); }                                       
 ;
 
 

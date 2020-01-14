@@ -1,9 +1,27 @@
-[DEBUG]Index:0	Value:4
+[DEBUG]Index:0	Value:10
 [DEBUG]Index:1	Value:1
 [DEBUG]Index:2	Value:2
 [DEBUG]Index:3	Value:3
-[DEBUG]Index:4	Value:5
-[DEBUG]Index:5	Value:4
+[DEBUG]Index:4	Value:10
+[DEBUG]Index:5	Value:10
+[DEBUG]Index:6	Value:undef
+[DEBUG]Index:7	Value:undef
+[DEBUG]Index:8	Value:undef
+[DEBUG]Index:9	Value:undef
+[DEBUG]Index:10	Value:undef
+[DEBUG]Index:11	Value:undef
+[DEBUG]Index:12	Value:undef
+[DEBUG]Index:13	Value:undef
+[DEBUG]Index:14	Value:undef
+[DEBUG]Index:15	Value:undef
+[DEBUG]Index:16	Value:undef
+[DEBUG]Index:17	Value:undef
+[DEBUG]Index:18	Value:undef
+[DEBUG]Index:19	Value:undef
+[DEBUG]Index:20	Value:undef
+[DEBUG]Index:21	Value:undef
+[DEBUG]Index:22	Value:undef
+[DEBUG]Index:23	Value:undef
 [VM]:
 SUB 0
 INC
@@ -14,10 +32,9 @@ INC
 STORE 3
 SUB 0
 INC
-SHIFT 2
+SHIFT 3
+INC
 INC
 STORE 4
-SUB 0
-INC
-SHIFT 2
+LOAD 4
 STORE 5

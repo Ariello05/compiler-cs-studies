@@ -482,7 +482,7 @@ static const yytype_uint8 yyrline[] =
        0,    54,    54,    56,    59,    60,    61,    62,    65,    66,
       70,    73,    76,    78,    81,    84,    88,    92,    94,    97,
       98,    99,   100,   101,   102,   105,   106,   107,   108,   109,
-     110,   113,   114,   117,   118,   119
+     110,   113,   114,   117,   118,   120
 };
 #endif
 
@@ -1351,66 +1351,79 @@ yyreduce:
 
   case 4:
 #line 59 "parser.ypp"
-    { auto pid = (yyvsp[0].str); vars->declareVar(*pid); }
+    { auto pid = (yyvsp[0].str); code->declareVariable(*pid); }
 #line 1356 "parser_y.c"
+    break;
+
+  case 5:
+#line 60 "parser.ypp"
+    {auto pid = (yyvsp[-5].str); auto beg = (yyvsp[-3].number); auto end = (yyvsp[-1].number); code->declareArray(*pid,beg,end);}
+#line 1362 "parser_y.c"
     break;
 
   case 6:
 #line 61 "parser.ypp"
-    { auto pid = (yyvsp[0].str); vars->declareVar(*pid); }
-#line 1362 "parser_y.c"
+    { auto pid = (yyvsp[0].str); code->declareVariable(*pid); }
+#line 1368 "parser_y.c"
+    break;
+
+  case 7:
+#line 62 "parser.ypp"
+    {auto pid = (yyvsp[-5].str); auto beg = (yyvsp[-3].number); auto end = (yyvsp[-1].number); code->declareArray(*pid,beg,end);}
+#line 1374 "parser_y.c"
     break;
 
   case 10:
 #line 70 "parser.ypp"
     { auto index = (yyvsp[-3].number); auto value = (yyvsp[-1].number); code->assignValueToVar(index,value); }
-#line 1368 "parser_y.c"
+#line 1380 "parser_y.c"
     break;
 
   case 19:
 #line 97 "parser.ypp"
     { (yyval.number) = (yyvsp[0].number); }
-#line 1374 "parser_y.c"
+#line 1386 "parser_y.c"
     break;
 
   case 20:
 #line 98 "parser.ypp"
     { (yyval.number) = (yyvsp[-2].number) + (yyvsp[0].number);}
-#line 1380 "parser_y.c"
+#line 1392 "parser_y.c"
     break;
 
   case 31:
 #line 113 "parser.ypp"
-    { auto val = (yyvsp[0].number); code->loadValue(val); }
-#line 1386 "parser_y.c"
+    { auto val = (yyvsp[0].number); code->loadValue(val); (yyval.number) = (yyvsp[0].number); }
+#line 1398 "parser_y.c"
     break;
 
   case 32:
 #line 114 "parser.ypp"
-    { auto index = (yyvsp[0].number); (yyval.number) = vars->getValueOfIndex(index); }
-#line 1392 "parser_y.c"
+    { auto index = (yyvsp[0].number); (yyval.number) = code->loadIdentifier(index); }
+#line 1404 "parser_y.c"
     break;
 
   case 33:
 #line 117 "parser.ypp"
-    { (yyval.number) = vars->getIndexOfVar(*((yyvsp[0].str))); }
-#line 1398 "parser_y.c"
+    { auto pid = (yyvsp[0].str); (yyval.number) = vars->getIndexOfVar(*(pid)); }
+#line 1410 "parser_y.c"
     break;
 
   case 34:
 #line 118 "parser.ypp"
-    { (yyval.number) = vars->getIndexOfVar(*((yyvsp[-3].str))); }
-#line 1404 "parser_y.c"
+    { auto pid2 = (yyvsp[-1].str); auto pid = (yyvsp[-3].str); auto res = vars->getIndexOfVar(*pid2);
+                                                          (yyval.number) = vars->getIndexOfArrayElement(*pid,res); }
+#line 1417 "parser_y.c"
     break;
 
   case 35:
-#line 119 "parser.ypp"
-    { (yyval.number) = vars->getIndexOfVar(*((yyvsp[-3].str))); }
-#line 1410 "parser_y.c"
+#line 120 "parser.ypp"
+    { auto pid = (yyvsp[-3].str); auto val = (yyvsp[-1].number); (yyval.number) = vars->getIndexOfArrayElement(*pid,val); }
+#line 1423 "parser_y.c"
     break;
 
 
-#line 1414 "parser_y.c"
+#line 1427 "parser_y.c"
 
       default: break;
     }
@@ -1642,7 +1655,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 123 "parser.ypp"
+#line 124 "parser.ypp"
 
 
 void yyerror(std::string err){

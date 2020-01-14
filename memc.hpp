@@ -8,6 +8,42 @@
 
 using std::string;
 
+//-10 : 20
+/** 
+ * Handles accessing
+ * 
+*/
+class Array{
+public:
+    Array(long long memblockstart, long long begin, long long end){
+        if(begin > end){
+            throw std::runtime_error("Array can't have begin lesser than end");
+        }
+        this->memblockstart = memblockstart;
+        this->begin = begin;
+        this->end = end;
+        size = abs(begin) + abs(end);
+    }
+
+    long long getMemBlockIndex(long long item){
+        auto offset = item + abs(begin);
+        if(offset > size || offset < 0){
+            throw std::runtime_error("Access of Array out of bounds");
+        }
+
+        return offset + memblockstart;
+    }
+
+
+private:
+    long long memblockstart;
+
+    long long begin;
+    long long end;
+    long long size;
+};
+
+
 /**
  * Class controlls values of the memory blocks in virtual machine  
  * Accessing:
@@ -22,27 +58,36 @@ public:
     long long declareVar(string name, long long value);
     long long declareVar(string name);
     long long declareValue(long long value);
+    long long declareArray(string name, long long begin, long long end);
 
     void setValueIn(string name, long long value);
     void setValueIn(long long index, long long value);
+    void setValueIn(string name, long long index, long long value);
 
     std::shared_ptr<MemBlock> getBlock(string name);
     std::shared_ptr<MemBlock> getBlock(long long index);
+    std::shared_ptr<MemBlock> getBlock(string name, long long index);
 
     long long getValueOfVar(string name);
     long long getValueOfIndex(long long index);
+    long long getValueOfIndexInArray(string name, long long index);
 
     long long getIndexOfValue(long long value);
+    long long getIndexOfValue(long long value, MTYPE type);
     long long getIndexOfVar(string name);
+    long long getIndexOfArrayElement(string name, long long element);
 
+    MTYPE getTypeOfIndex(long long index);
     long long getFreeIndex();
 
     void printAll();
 
 
 private:
-
+    //Most of the work is done in blocks which holds pairs index in memory - memblocks(VALUE)
+    //variables and arrays map is only used as helper to faster identify correct indexes
     std::map<long long, std::shared_ptr<MemBlock>> blocks;
     std::map<string, long long> variables;
+    std::map<string, Array> arrays;
     long long indexer;
 };

@@ -1,6 +1,6 @@
 DECLARE 
-    a,b
+    tab(-10:10)
 BEGIN
-    a ASSIGN 5;
-    b ASSIGN 4;
+    tab(-10) ASSIGN 10;
+    tab(-9) ASSIGN tab(-10);
 END

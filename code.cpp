@@ -20,6 +20,16 @@ void Coder::addVars(long long pid1, long long pid2){
 
 }
 
+void Coder::declareArray(string name, long long begin, long long end){
+    mc->declareArray(name,begin,end);
+}
+
+
+void Coder::declareVariable(string name){
+    mc->declareVar(name);
+}
+
+
 /**
  * Stores constant in memory
  * Does nothing if said value is already defined 
@@ -182,6 +192,12 @@ void Coder::loadValue(long long value){
 
     //}
 }
+
+long long Coder::loadIdentifier(long long pid){
+    vm.push_back("LOAD " + std::to_string(pid));
+    return mc->getValueOfIndex(pid);
+}
+
 
 void Coder::assignValueToVar(long long id, long long value){
     mc->setValueIn(id, value);

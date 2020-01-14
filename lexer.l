@@ -60,7 +60,7 @@ PUNCT                   [\(\)\:\;]
                             yylval.number = std::stoll(yytext);
                             return num;
                         }
-","                 { return yytext[0]; }
+":"                 { return yytext[0]; }
 {PUNCT}             { return yytext[0]; }
 
 
