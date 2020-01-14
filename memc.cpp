@@ -26,7 +26,7 @@ long long MemoryController::declareArray(string name, long long begin, long long
         throw std::runtime_error("In array, end can't be less than begin");
     }
 
-    for(auto i = begin; i<end; ++i){
+    for(auto i = begin; i<=end; ++i){
         blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY))));//WE HOLD VARIABLE AT SOME INDEX
         ++indexer;
     }

@@ -6,10 +6,12 @@
 #include "memc.hpp"
 #include "structs.hpp"
 #include "code.hpp"
+#include <exception>
 
 int yylex();
 int yyparse();
 void yyerror(std::string er);
+void yyabort();
 //extern FILE *yyin;
 extern int yylineno;
 
@@ -57,9 +59,27 @@ program:        DECLARE declarations BEGINA commands END { vars->printAll(); cod
 ;
 
 declarations:   declarations ',' pidentifier                { auto pid = $3; code->declareVariable(*pid); }
-                | declarations ',' pidentifier '(' num ':' num ')'    {auto pid = $3; auto beg = $5; auto end = $7; code->declareArray(*pid,beg,end);}                                          
+                | declarations ',' pidentifier '(' num ':' num ')'    
+                {
+                  auto pid = $3; auto beg = $5; auto end = $7; 
+                  try{
+                    code->declareArray(*pid,beg,end);
+                  }catch(std::runtime_error & err){
+                    yyerror(err.what());
+                    YYABORT;
+                  }
+                }                                          
                 | pidentifier                               { auto pid = $1; code->declareVariable(*pid); }
-                | pidentifier '('num ':' num ')'  {auto pid = $1; auto beg = $3; auto end = $5; code->declareArray(*pid,beg,end);} 
+                | pidentifier '('num ':' num ')'  
+                {
+                  auto pid = $1; auto beg = $3; auto end = $5;
+                  try{
+                    code->declareArray(*pid,beg,end);
+                  }catch(std::runtime_error & err){
+                    yyerror(err.what());
+                    YYABORT;
+                  }
+                }
 ;
 
 commands:       commands command
@@ -124,7 +144,7 @@ identifier:     pidentifier                           { auto pid = $1; $$ = vars
 %%
 
 void yyerror(std::string err){
-  std::cout << err;
+  std::cerr << err;
 }
 
 int main(int argc, char** argv) {

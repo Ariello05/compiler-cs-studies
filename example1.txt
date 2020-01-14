@@ -1,6 +1,6 @@
 DECLARE 
-    tab(-10:10)
+    tab(10:-10)
 BEGIN
     tab(-10) ASSIGN 10;
-    tab(-9) ASSIGN tab(-10);
+    tab(10) ASSIGN tab(-10);
 END
