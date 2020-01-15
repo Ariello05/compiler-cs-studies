@@ -9,7 +9,7 @@
 
 IDENTIFIER              [_a-z]
 DIGIT                   [0-9]
-PUNCT                   [\(\)\:\;]
+PUNCT                   [\(\)\:\;\,]
 
 %x OPS
 
@@ -60,7 +60,6 @@ PUNCT                   [\(\)\:\;]
                             yylval.number = std::stoll(yytext);
                             return num;
                         }
-":"                 { return yytext[0]; }
 {PUNCT}             { return yytext[0]; }
 
 

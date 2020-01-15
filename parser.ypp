@@ -87,7 +87,7 @@ commands:       commands command
 ;
 
 
-command:        identifier ASSIGN expression ';'         { auto index = $1; auto value = $3; code->assignValueToVar(index,value); }                                                       
+command:        identifier ASSIGN expression ';'         { std::cerr<<"ASSIGN\n";auto index = $1; auto value = $3; code->assignValueToVar(index,value); }                                                       
 
                 
                 | IF condition THEN commands                                                             
@@ -95,8 +95,8 @@ command:        identifier ASSIGN expression ';'         { auto index = $1; auto
 
                 | IF condition THEN commands ENDIF                                                  
 
-                | WHILE condition DO                                                                                                                                                             
-                  commands ENDWHILE                                                        
+                | WHILE condition DO  {std::cerr<<"DO\n";}                                                                                                                                                          
+                  commands ENDWHILE   {std::cerr<<"ENDWHILE\n";}                                  
 
                 | DO                                                                    
                   commands WHILE condition ENDDO                                        
@@ -114,9 +114,9 @@ command:        identifier ASSIGN expression ';'         { auto index = $1; auto
                 | WRITE value ';'                                                       
 ;
 
-expression:     value                 { $$ = $1; }                                                   
-                | value PLUS value    { $$ = $1 + $3;}                                                
-                | value MINUS value                                                      
+expression:     value                 { $$ = $1; code->getValue();      }                                              
+                | value PLUS value    { $$ = $1 + $3; code->addVars();  }                                                
+                | value MINUS value   { $$ = $1 - $3; code->subVars();  }                                                  
                 | value TIMES value                                                       
                 | value DIV value                                                       
                 | value MOD value                                                      
@@ -129,9 +129,9 @@ condition:      value EQ value
                 | value LEQ value                                                     
                 | value GEQ value                                                     
 ;
-  /*TODO probably might need MemBlock here later*/
-value:          num                           { auto val = $1; code->loadValue(val); $$ = $1; }                                                 
-                | identifier                  { auto index = $1; $$ = code->loadIdentifier(index); }                                                              
+
+value:          num                           { auto val = $1; $$ = val; code->stackValue(val); }                                                 
+                | identifier                  { auto index = $1; $$ = vars->getValueOfIndex(index); code->stackVariable(index); }                                                              
 ;
 
 identifier:     pidentifier                           { auto pid = $1; $$ = vars->getIndexOfVar(*(pid)); }                                                

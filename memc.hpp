@@ -22,12 +22,19 @@ public:
         this->memblockstart = memblockstart;
         this->begin = begin;
         this->end = end;
-        size = abs(begin) + abs(end);
+        if(begin <= 0 && end >= 0){
+            size = abs(begin) + abs(end) + 1;
+        }else if(begin <= 0 && end <= 0){
+            size = abs(begin - end) + 1;
+        }else if(begin >= 0 && end >= 0){
+            size = end - begin + 1;
+        }
+
     }
 
     long long getMemBlockIndex(long long item){
-        auto offset = item + abs(begin);
-        if(offset > size || offset < 0){
+        auto offset = item - begin;
+        if(offset >= size || offset < 0){
             throw std::runtime_error("Access of Array out of bounds");
         }
 

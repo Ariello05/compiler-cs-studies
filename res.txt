@@ -1,1 +1,21 @@
-In array, end can't be less than begin
+[DEBUG]Index:0	Value:2
+[DEBUG]Index:1	Value:1
+[DEBUG]Index:2	Value:2
+[DEBUG]Index:3	Value:3
+[DEBUG]Index:4	Value:2
+[DEBUG]Index:5	Value:undef
+[VM]:
+SUB 0
+INC
+STORE 1
+INC
+STORE 2
+INC
+STORE 3
+SUB 0
+INC
+STORE 4
+SUB 0
+INC
+SHIFT 1
+STORE 4

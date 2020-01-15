@@ -1,6 +1,9 @@
 DECLARE 
-    tab(10:-10)
+    a,b
 BEGIN
-    tab(-10) ASSIGN 10;
-    tab(10) ASSIGN tab(-10);
+    a ASSIGN 1;
+    WHILE 1 EQ 2 DO
+    a ASSIGN 2;
+    ENDWHILE
+
 END

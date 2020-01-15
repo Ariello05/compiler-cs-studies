@@ -5,8 +5,19 @@
 
 using std::string;
 
+/**
+ * ARRAY - array item
+ * VARIABLE - variable
+ * SPECIAL - value declared in the beginning in order to somewhat optimize times
+ * CONST - local constant 
+ * 
+*/
 enum MTYPE {ARRAY, VARIABLE, CONST, AC};
 
+/**
+ * Container for virtual machine memory blocks 
+ * 
+*/ 
 class MemBlock{
     public:
      
