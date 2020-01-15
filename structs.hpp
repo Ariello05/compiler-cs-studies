@@ -21,12 +21,14 @@ enum MTYPE {ARRAY, VARIABLE, CONST, AC};
 class MemBlock{
     public:
      
-    MemBlock(long long value, MTYPE type){
+    MemBlock(long long value, MTYPE type, string name=""){
+        this->name = name;
         this->value = value;
         this->type = type;
         isDef = true;
     }
-    MemBlock(MTYPE type){
+    MemBlock(MTYPE type, string name=""){
+        this->name = name;
         this->type = type;
         isDef = false;
         if(type == CONST){
@@ -50,12 +52,17 @@ class MemBlock{
         return isDef;
     }
 
+    string getName(){
+        return name;
+    }
+
     MTYPE getType(){
         return type;
     }
 
     private:
 
+    string name;
     long long value;
     MTYPE type;
     bool isDef;

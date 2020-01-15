@@ -6,6 +6,7 @@ MemoryController::MemoryController(){
     indexer = 1;
 }
 
+// lets just don't call it
 long long MemoryController::declareVar(string name, long long value){
     blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(value, MTYPE::VARIABLE))));//WE HOLD VARIABLE AT SOME INDEX
     variables.insert(std::make_pair(name,indexer));//WE HOLD NAME-INDEX PAIR
@@ -14,7 +15,7 @@ long long MemoryController::declareVar(string name, long long value){
 }
 
 long long MemoryController::declareVar(string name){
-    blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::VARIABLE))));//WE HOLD VARIABLE AT SOME INDEX
+    blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::VARIABLE,name))));//WE HOLD VARIABLE AT SOME INDEX
     variables.insert(std::make_pair(name,indexer));//WE HOLD NAME-INDEX PAIR
     ++indexer;
     return indexer-1;
@@ -27,7 +28,7 @@ long long MemoryController::declareArray(string name, long long begin, long long
     }
 
     for(auto i = begin; i<=end; ++i){
-        blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY))));//WE HOLD VARIABLE AT SOME INDEX
+        blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(i) + ")"))));//WE HOLD VARIABLE AT SOME INDEX
         ++indexer;
     }
     arrays.insert(std::make_pair(name,Array(blockstart,begin,end)));
@@ -90,25 +91,25 @@ std::shared_ptr<MemBlock> MemoryController::getBlock(string name, long long inde
     return blocks.find(arr->second.getMemBlockIndex(index))->second;
 }
 
-
+//Depracated for now
 long long MemoryController::getValueOfVar(string name){
     auto res = variables.find(name)->second;
     auto block = blocks.find(res)->second;
     return block->getValue();
 }
-
+//Still usable
 long long MemoryController::getValueOfIndex(long long index){
     auto block = blocks.find(index)->second;
     return block->getValue();
 }
-
+//Depracated for now
 long long MemoryController::getValueOfIndexInArray(string name, long long index){
     auto res = arrays.find(name)->second;
     auto block = blocks.find(res.getMemBlockIndex(index))->second;
     return block->getValue();
 }
 
-
+//Depracated for now
 long long MemoryController::getIndexOfValue(long long value){
 
     auto beg = blocks.begin();
@@ -128,16 +129,20 @@ long long MemoryController::getIndexOfValue(long long value){
     //throw std::runtime_error(err);
 }
 
+//Still usable for MTYPE==CONST
 long long MemoryController::getIndexOfValue(long long value, MTYPE type){
 
     auto beg = blocks.begin();
     const auto end = blocks.end();
     while(beg != end){
         try{
+            if(beg->second->getType() != type){
+                ++beg;
+                continue;
+            }
+
             if(beg->second->getValue() == value)
             {
-                if(beg->second->getType() != type)
-                    continue;
                 return beg->first;
             }
         }
@@ -174,11 +179,33 @@ void MemoryController::printAll(){
     while(beg != end){
         try{
             auto val = beg->second->getValue();
-            std::cout << "[DEBUG]Index:" << beg->first << "\tValue:" << val << std::endl;
+            std::cout << "[DEBUG| Index:" << beg->first << "\tValue:" << val << ']' << std::endl;
         }
         catch(...){
-            std::cout << "[DEBUG]Index:" << beg->first << "\tValue:" << "undef" << std::endl;
+            std::cout << "[DEBUG| Index:" << beg->first << "\tValue:" << "undef" << ']' << std::endl;
         }
         ++beg;
+    }
+}
+
+void MemoryController::printUndefined(){
+    auto beg = blocks.begin();
+    const auto end = blocks.end();
+    std::vector<string> vars;
+    while(beg != end){
+        if(!beg->second->isDefined()){
+            vars.push_back(beg->second->getName());
+        }
+        ++beg;
+    }
+    if(vars.size() >= 1){
+        std::cerr << "\033[1;33m[WARNING]\033[0m Undefined variables namely:" <<std::endl;
+        auto beg = vars.begin();
+        const auto end = vars.end();
+        while(beg != end){
+            std::cerr << *beg << std::endl;
+            ++beg;
+        }
+
     }
 }

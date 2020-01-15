@@ -105,8 +105,6 @@ void Coder::subVars(){
     auto second = args.top(); args.pop();//right
     auto first = args.top(); args.pop();//left
 
-    std::cout << first.value << "\t" << second.value << std::endl;
-
     //TODO: Serch variables for samealike const values?
 
     if(!first.isVariable && second.isVariable){
@@ -169,6 +167,52 @@ void Coder::subVars(){
     }
 }
 
+/* CONDITION BLOCK*/
+void Coder::processEQ(){
+    subVars();//after this value is in AC
+    auto before = vm.size();
+    vm.push_back("JZERO " + std::to_string(before+2));
+    vm.push_back("JUMP ");
+    jumps.push(vm.size()-1);//we say that this needs to be updated later
+}
+
+void Coder::processNEQ(){
+    subVars();//after this value is in AC
+    vm.push_back("JZERO ");
+    auto before = vm.size();
+    jumps.push(before-1);//we say that this needs to be updated later
+}
+
+void Coder::processLE(){
+    subVars();//after this value is in AC
+    auto before = vm.size();
+    vm.push_back("JEG " + std::to_string(before+2));
+    vm.push_back("JUMP ");
+    jumps.push(vm.size()-1);//we say that this needs to be updated later
+}
+
+void Coder::processGE(){
+    subVars();//after this value is in AC
+    auto before = vm.size();
+    vm.push_back("JPOS " + std::to_string(before+2));
+    vm.push_back("JUMP ");
+    jumps.push(vm.size()-1);//we say that this needs to be updated later
+}
+
+void Coder::processLEQ(){
+    subVars();//after this value is in AC
+    vm.push_back("JPOS ");
+    auto before = vm.size();
+    jumps.push(before-1);//we say that this needs to be updated later
+}
+
+void Coder::processGEQ(){
+    subVars();//after this value is in AC
+    vm.push_back("JNEG ");
+    auto before = vm.size();
+    jumps.push(before-1);//we say that this needs to be updated later
+}
+
 /**
  * Loads/defines value/variable to AC 
  * Uses stack
@@ -192,7 +236,7 @@ void Coder::getValue(){
         auto value = item.value;
 
         std::bitset<64> bits(value);//bits[0] rightmost, bits[63] leftmost
-        auto index = mc->getIndexOfValue(value);
+        auto index = mc->getIndexOfValue(value,MTYPE::CONST);
         if(index > 0){ //already defined TODO: What if overflow?
             if(value < 7 && value > -7){
                 defineValue(value);
@@ -232,18 +276,34 @@ long long Coder::loadIdentifier(long long pid){
     return mc->getValueOfIndex(pid);
 }
 
-
+/* COMMAND BLOCK */
 void Coder::assignValueToVar(long long id, long long value){//value is in AC
     mc->setValueIn(0, value);
     mc->setValueIn(id, value);
     vm.push_back("STORE " + std::to_string(id));
 }
 
+void Coder::endif(int offset=0){
+    if(jumps.size() <= 0){
+        throw std::runtime_error("Jump stack is empty!");
+    }
+    auto lastjump = jumps.top();
+    jumps.pop();
+    auto current = vm.size();
+    vm[lastjump] += std::to_string(current+offset);
+}
+
+void Coder::startelse(){
+    auto current = vm.end();
+    vm.insert(current,"JUMP ");
+    jumps.push(vm.size()-1);
+}
+
 
 void Coder::printVM(){
     auto beg = vm.begin();
     auto end = vm.end();
-    std::cout << "[VM]:" << std::endl;
+    //std::cout << "[VM:]" << std::endl;
     while(beg != end){
         std::cout<< *beg << std::endl;
         beg++;
@@ -252,9 +312,9 @@ void Coder::printVM(){
 
 void Coder::defineValue(long long value){
     mc->setValueIn(0,value);
-    auto one = mc->getIndexOfValue(1);
-    auto two = mc->getIndexOfValue(2);
-    auto three = mc->getIndexOfValue(3);
+    auto one = mc->getIndexOfValue(1,CONST);
+    auto two = mc->getIndexOfValue(2,CONST);
+    auto three = mc->getIndexOfValue(3,CONST);
 
     bool negative = 0;
     if(value < 0){

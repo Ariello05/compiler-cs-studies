@@ -37,6 +37,14 @@ public:
     void subVars();//USES STACK
     void getValue();//USES STACK
 
+    /* CONDITION BLOCK*/
+    void processEQ();
+    void processNEQ();
+    void processLE();
+    void processGE();
+    void processLEQ();
+    void processGEQ();
+
     /* DECLERATION BLOCK */
     void declareArray(string name, long long begin, long long end);
     void declareVariable(string name);
@@ -46,12 +54,14 @@ public:
     void stackValue(long long value);
     void clearStack();
 
-
     
     long long loadIdentifier(long long pid);
     
-    /* ASSIGN BLOCK */
+    /* COMMAND BLOCK */
     void assignValueToVar(long long id, long long value);
+    void endif(int offset = 0);
+    void startelse();
+
     //void declareVar(long long pid);
 
     /* DEBUG AND HELP BLOCK */
@@ -65,5 +75,7 @@ private:
     std::vector<string> vm;
     std::shared_ptr<MemoryController> mc;
     std::stack<SmartBlock> args;
+    std::stack<long long> loopJumps;
+    std::stack<long long> jumps;
 
 };

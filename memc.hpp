@@ -86,7 +86,7 @@ public:
 
     MTYPE getTypeOfIndex(long long index);
     long long getFreeIndex();
-
+    void printUndefined();
     void printAll();
 
 

@@ -2,8 +2,13 @@ DECLARE
     a,b
 BEGIN
     a ASSIGN 1;
-    WHILE 1 EQ 2 DO
-    a ASSIGN 2;
-    ENDWHILE
+    IF 1 LE 1 THEN
+        a ASSIGN 2;
+            IF a GE 10 THEN
+                a ASSIGN 5;
+            ENDIF
+    ELSE
+    a ASSIGN 3;
+    ENDIF
 
 END

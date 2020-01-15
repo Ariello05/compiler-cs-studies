@@ -42,7 +42,7 @@ std::shared_ptr<Coder> code = std::make_shared<Coder>(vars);
 %start program
 %type <number> value
 %type <number> identifier //address of p
-%type <str> condition
+//%type <str> condition
 //%type <string> declarations
 //%type <string> commands
 //%type <string> command
@@ -53,7 +53,7 @@ std::shared_ptr<Coder> code = std::make_shared<Coder>(vars);
 %left TIMES DIV MOD
 %%      
 
-program:        DECLARE declarations BEGINA commands END { vars->printAll(); code->printVM();}                                                   
+program:        DECLARE declarations BEGINA commands END { vars->printUndefined(); code->printVM();}                                                   
                 |
                 BEGINA commands END 
 ;
@@ -87,13 +87,16 @@ commands:       commands command
 ;
 
 
-command:        identifier ASSIGN expression ';'         { std::cerr<<"ASSIGN\n";auto index = $1; auto value = $3; code->assignValueToVar(index,value); }                                                       
+command:        identifier ASSIGN expression ';'         { auto index = $1; auto value = $3; code->assignValueToVar(index,value); }                                                       
 
                 
                 | IF condition THEN commands                                                             
-                  ELSE commands ENDIF                                                                
+                  ELSE { code->endif(1); code->startelse(); } 
+                  commands 
+                  ENDIF { code->endif(); }                                                                
 
-                | IF condition THEN commands ENDIF                                                  
+                | IF condition THEN commands 
+                ENDIF { code->endif(); }                                                 
 
                 | WHILE condition DO  {std::cerr<<"DO\n";}                                                                                                                                                          
                   commands ENDWHILE   {std::cerr<<"ENDWHILE\n";}                                  
@@ -122,12 +125,12 @@ expression:     value                 { $$ = $1; code->getValue();      }
                 | value MOD value                                                      
 ;
 
-condition:      value EQ value                                                        
-                | value NEQ value                                                     
-                | value LE value                                                      
-                | value GE value                                                      
-                | value LEQ value                                                     
-                | value GEQ value                                                     
+condition:      value EQ value      { code->processEQ();  }              
+                | value NEQ value   { code->processNEQ();  }              
+                | value LE value    { code->processLE();  }              
+                | value GE value    { code->processGE();  }              
+                | value LEQ value   { code->processLEQ();  }              
+                | value GEQ value   { code->processGEQ();  }              
 ;
 
 value:          num                           { auto val = $1; $$ = val; code->stackValue(val); }                                                 
@@ -144,7 +147,7 @@ identifier:     pidentifier                           { auto pid = $1; $$ = vars
 %%
 
 void yyerror(std::string err){
-  std::cerr << err;
+  std::cerr << "\033[1;31m[ERROR]\033[0m " << err;
 }
 
 int main(int argc, char** argv) {
