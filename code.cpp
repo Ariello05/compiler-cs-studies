@@ -7,6 +7,7 @@ Coder::Coder(std::shared_ptr<MemoryController> mc){
     auto a = mc->declareValue(1);
     auto b = mc->declareValue(2);
     auto c = mc->declareValue(3);
+    mc->declareSpecial(mc->special);
     vm.push_back("SUB 0");
     vm.push_back("INC");
     vm.push_back("STORE " + std::to_string(a));
@@ -258,7 +259,14 @@ void Coder::getValue(){
 }
 
 void Coder::stackVariable(long long index){
-    args.push(SmartBlock(true,index));
+    if(arrayLocal != ""){
+        args.push(SmartBlock(true,index,arrayLocal));//arrayItem
+
+    }else{
+        args.push(SmartBlock(true,index));
+    }
+
+    arrayLocal = "";
 }
 
 void Coder::stackValue(long long value){
@@ -270,6 +278,21 @@ void Coder::clearStack(){
         args.pop();
 }
 
+/*
+void Coder::accessArrayWithVariable(string variable){
+    auto addressBegin = mc->getIndexOfArrayElement(arrayLocal,0);
+    auto arrayIndex = mc->declareValue(addressBegin);
+    defineValue(addressBegin);
+    vm.push_back("STORE " + std::to_string(arrayIndex));
+    auto varIndex = mc->getIndexOfVar(variable);
+    vm.push_back("LOAD " + std::to_string(varIndex));
+}*/
+
+void Coder::setArrayToAccess(string array){
+    arrayLocal = array;
+}
+
+
 
 long long Coder::loadIdentifier(long long pid){
     vm.push_back("LOAD " + std::to_string(pid));
@@ -278,25 +301,129 @@ long long Coder::loadIdentifier(long long pid){
 
 /* COMMAND BLOCK */
 void Coder::assignValueToVar(long long id, long long value){//value is in AC
-    mc->setValueIn(0, value);
-    mc->setValueIn(id, value);
-    vm.push_back("STORE " + std::to_string(id));
+    if(arrayLocal != ""){//ACCESSING ARRAY BY VARIABLE
+        auto local = mc->smartGetSpecialIndex(".Local");
+        vm.push_back("STORE " + std::to_string(local));
+        auto arr = mc->getArray(arrayLocal);
+        auto first = arr.getFirstOffsetedIndex();
+        //auto index = mc->declareValue(first);
+        defineValue(first);
+        //vm.push_back("STORE " + std::to_string(index));
+        //vm.push_back("LOAD " + std::to_string(pid));
+        vm.push_back("ADD " + std::to_string(id));
+        
+        auto indexToStore = mc->getIndexOfSpecial(mc->special);
+        
+        mc->setValueIn(indexToStore,first+mc->getValueOfIndex(id));//TODO:COMMENT IF MORE THAN 64 BIT or use some flag w/e
+        vm.push_back("STORE " + std::to_string(indexToStore));
+        vm.push_back("LOAD " + std::to_string(local) );
+        vm.push_back("STOREI " + std::to_string(indexToStore));
+        
+        mc->setValueIn(0, value);
+    }else{
+        mc->setValueIn(0, value);
+        mc->setValueIn(id, value);
+        vm.push_back("STORE " + std::to_string(id));
+    }
+    arrayLocal = "";
 }
 
-void Coder::endif(int offset=0){
+void Coder::endif(){
     if(jumps.size() <= 0){
         throw std::runtime_error("Jump stack is empty!");
     }
     auto lastjump = jumps.top();
     jumps.pop();
     auto current = vm.size();
-    vm[lastjump] += std::to_string(current+offset);
+    vm[lastjump] += std::to_string(current);
 }
 
+
 void Coder::startelse(){
-    auto current = vm.end();
-    vm.insert(current,"JUMP ");
+    if(jumps.size() <= 0){
+        throw std::runtime_error("Jump stack is empty!");
+    }
+    auto lastjump = jumps.top();
+    jumps.pop();
+    auto current = vm.size();
+    vm[lastjump] += std::to_string(current+1);
+
+    auto currentE = vm.end();
+    vm.insert(currentE,"JUMP ");
     jumps.push(vm.size()-1);
+}
+
+/**
+ * Used mainly before condition in while loop 
+*/ 
+void Coder::stackJump(){
+    
+    jumps.push(vm.size()-1);//Stack jump
+}
+
+void Coder::endWhile(long long start){
+    if(jumps.size() != 1){
+        throw std::runtime_error("Jump stack should be of size 1!");   
+    }
+    auto current = vm.size();
+    auto ifjump = jumps.top();
+    jumps.pop();
+    vm[ifjump] += std::to_string(current+1);
+    vm.push_back("JUMP " + std::to_string(start));
+}
+
+void Coder::endDoWhile(){//TODO: fix this abomination
+    if(jumps.size() != 2){
+        throw std::runtime_error("Jump stack should be of size 2!");   
+    }
+    auto ifjump = jumps.top();
+    jumps.pop();
+    auto beforeCommand = jumps.top(); jumps.pop();
+
+    vm.push_back("JUMP " + std::to_string(beforeCommand+1));
+    vm[ifjump] += std::to_string(vm.size());
+}
+
+void Coder::read(long long pid){
+    if(arrayLocal != ""){//ACCESSING ARRAY BY VARIABLE
+        //pid variable
+        //name array
+        auto arr = mc->getArray(arrayLocal);
+        auto first = arr.getFirstOffsetedIndex();
+        //auto index = mc->declareValue(first);
+        defineValue(first);
+        //vm.push_back("STORE " + std::to_string(index));
+        //vm.push_back("LOAD " + std::to_string(pid));
+        vm.push_back("ADD " + std::to_string(pid));
+        auto indexToStore = mc->getIndexOfSpecial(mc->special);
+        mc->setValueIn(indexToStore,first+mc->getValueOfIndex(pid));//TODO:COMMENT IF MORE THAN 64 BIT or use some flag w/e
+        vm.push_back("STORE " + std::to_string(indexToStore));
+        vm.push_back("GET");
+        vm.push_back("STOREI " + std::to_string(indexToStore));
+    }
+    else{
+        vm.push_back("GET");
+        vm.push_back("STORE " + std::to_string(pid));//TODO: Optimize somehow
+        mc->setValueIn(pid,1);//to clear undef flag
+    }
+
+    mc->setValueIn(0,1);//to clear undef flag
+    arrayLocal = "";
+}
+
+void Coder::write(){
+    if(args.size() != 1){
+        std::runtime_error("Stack shouldn't have more than 1 value here");
+    }
+    auto arg = args.top(); args.pop();//right
+    if(arg.isVariable){
+        vm.push_back("LOAD " + std::to_string(arg.value));
+    }
+    else{
+        defineValue(arg.value);//TODO: optimize
+
+    }
+    vm.push_back("PUT");
 }
 
 
@@ -308,6 +435,14 @@ void Coder::printVM(){
         std::cout<< *beg << std::endl;
         beg++;
     }
+}
+
+void Coder::end(){
+    vm.push_back("HALT");
+}
+
+long long Coder::getCurrentPosition(){
+    return vm.size();
 }
 
 void Coder::defineValue(long long value){

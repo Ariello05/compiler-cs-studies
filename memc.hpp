@@ -32,6 +32,10 @@ public:
 
     }
 
+    long long getFirstOffsetedIndex(){
+        return memblockstart - begin;
+    }
+
     long long getMemBlockIndex(long long item){
         auto offset = item - begin;
         if(offset >= size || offset < 0){
@@ -41,9 +45,24 @@ public:
         return offset + memblockstart;
     }
 
+    void setupIndex(long long key, long long index){
+        auto s = iterators.insert(std::make_pair(key,index));
+        if(!s.second) throw std::runtime_error("Duplicate!");
+    }
+
+    long long getIndex(long long key){
+        auto index = iterators.find(key);
+        return index->second;
+    }
+
+    void removeIndex(long long key){
+        auto index = iterators.find(key);
+        iterators.erase(index);
+    }
 
 private:
     long long memblockstart;
+    std::map<long long, long long> iterators;//holds indexes to memory which points to element of Array
 
     long long begin;
     long long end;
@@ -66,6 +85,9 @@ public:
     long long declareVar(string name);
     long long declareValue(long long value);
     long long declareArray(string name, long long begin, long long end);
+    long long declareSpecial(string name);
+
+    long long smartGetSpecialIndex(string name);
 
     void setValueIn(string name, long long value);
     void setValueIn(long long index, long long value);
@@ -83,12 +105,15 @@ public:
     long long getIndexOfValue(long long value, MTYPE type);
     long long getIndexOfVar(string name);
     long long getIndexOfArrayElement(string name, long long element);
+    long long getIndexOfSpecial(string name);
+    Array getArray(string name);
 
     MTYPE getTypeOfIndex(long long index);
     long long getFreeIndex();
     void printUndefined();
     void printAll();
 
+    const string special = ".Array";
 
 private:
     //Most of the work is done in blocks which holds pairs index in memory - memblocks(VALUE)
@@ -96,5 +121,6 @@ private:
     std::map<long long, std::shared_ptr<MemBlock>> blocks;
     std::map<string, long long> variables;
     std::map<string, Array> arrays;
+    std::map<string, long long> specials;
     long long indexer;
 };

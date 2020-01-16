@@ -8,11 +8,11 @@ using std::string;
 /**
  * ARRAY - array item
  * VARIABLE - variable
- * SPECIAL - value declared in the beginning in order to somewhat optimize times
+ * SPECIAL - special
  * CONST - local constant 
- * 
+ * AC - register
 */
-enum MTYPE {ARRAY, VARIABLE, CONST, AC};
+enum MTYPE {ARRAY, VARIABLE, CONST, AC, SPECIAL};
 
 /**
  * Container for virtual machine memory blocks 

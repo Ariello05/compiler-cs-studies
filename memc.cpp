@@ -8,6 +8,9 @@ MemoryController::MemoryController(){
 
 // lets just don't call it
 long long MemoryController::declareVar(string name, long long value){
+    if(variables.find(name) != variables.end()){
+        
+    }
     blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(value, MTYPE::VARIABLE))));//WE HOLD VARIABLE AT SOME INDEX
     variables.insert(std::make_pair(name,indexer));//WE HOLD NAME-INDEX PAIR
     ++indexer;
@@ -15,6 +18,9 @@ long long MemoryController::declareVar(string name, long long value){
 }
 
 long long MemoryController::declareVar(string name){
+    if(variables.find(name) != variables.end()){
+        throw std::runtime_error("Variable: " + name + " is already defined!");
+    }
     blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::VARIABLE,name))));//WE HOLD VARIABLE AT SOME INDEX
     variables.insert(std::make_pair(name,indexer));//WE HOLD NAME-INDEX PAIR
     ++indexer;
@@ -25,6 +31,9 @@ long long MemoryController::declareArray(string name, long long begin, long long
     auto blockstart = indexer;
     if(begin > end){
         throw std::runtime_error("In array, end can't be less than begin");
+    }
+    if(arrays.find(name) != arrays.end()){
+        throw std::runtime_error("Array: " + name + " is already defined!");
     }
 
     for(auto i = begin; i<=end; ++i){
@@ -59,6 +68,27 @@ long long MemoryController::declareValue(long long value){
     ++indexer;
     return indexer-1;
 }
+
+long long MemoryController::declareSpecial(string name){
+    if(specials.find(name) != specials.end()){
+        throw std::runtime_error("Declaring already existing special!");
+    }
+    specials.insert(std::make_pair(name,indexer));
+    blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::SPECIAL))));//WE HOLD VARIABLE AT SOME INDEX
+    ++indexer;
+    return indexer-1;
+}
+
+long long MemoryController::smartGetSpecialIndex(string name){
+    if(specials.find(name) == specials.end()){
+        return declareSpecial(name);
+    }
+    else{
+        return getIndexOfSpecial(name);
+    }
+}
+
+
 
 void MemoryController::setValueIn(string name, long long value){
     auto res = variables.find(name)->second;
@@ -155,12 +185,31 @@ long long MemoryController::getIndexOfValue(long long value, MTYPE type){
 }
 
 long long MemoryController::getIndexOfVar(string name){
-    return variables.find(name)->second;
+    auto var = variables.find(name);
+    if(var == variables.end()){
+        throw std::runtime_error("Accesing undeclared variable: " + name);
+    }
+    return var->second;
 }
 
 long long MemoryController::getIndexOfArrayElement(string name, long long element){
-    auto res = arrays.find(name)->second;
-    return res.getMemBlockIndex(element);
+    auto res = arrays.find(name);
+    if(res == arrays.end()){
+        throw std::runtime_error("Accesing undeclared array: " + name);
+    }
+    return res->second.getMemBlockIndex(element);
+}
+long long MemoryController::getIndexOfSpecial(string name){
+    auto res = specials.find(name)->second;
+    return blocks.find(res)->first;
+}
+
+Array MemoryController::getArray(string name){
+    auto res = arrays.find(name);
+    if(res == arrays.end()){
+        throw std::runtime_error("Accesing undeclared array: " + name);
+    }
+    return res->second;
 }
 
 MTYPE MemoryController::getTypeOfIndex(long long index){
@@ -177,12 +226,32 @@ void MemoryController::printAll(){
     auto beg = blocks.begin();
     const auto end = blocks.end();
     while(beg != end){
+        string name;
+        switch(beg->second->getType()){
+            case MTYPE::AC:
+                name = "AC\t\t\t";
+                break;
+            case MTYPE::ARRAY:
+                name = "ARRAY\t\t";
+                break;
+            case MTYPE::CONST:
+                name = "CONST\t\t";
+                break;
+            case MTYPE::VARIABLE:
+                name = "VARIABLE\t";
+                break;
+            case MTYPE::SPECIAL:
+                name = "SPECIAL\t";
+                break;
+        }
+
         try{
             auto val = beg->second->getValue();
-            std::cout << "[DEBUG| Index:" << beg->first << "\tValue:" << val << ']' << std::endl;
+    
+            std::cout << "[" << name << "| Index:" << beg->first << "\tValue:" << val << ']' << std::endl;
         }
         catch(...){
-            std::cout << "[DEBUG| Index:" << beg->first << "\tValue:" << "undef" << ']' << std::endl;
+            std::cout << "[" << name << "| Index:" << beg->first << "\tValue:" << "undef" << ']' << std::endl;
         }
         ++beg;
     }

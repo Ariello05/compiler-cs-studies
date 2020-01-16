@@ -18,6 +18,8 @@ extern int yylineno;
 std::shared_ptr<MemoryController> vars = std::make_shared<MemoryController>();
 std::shared_ptr<Coder> code = std::make_shared<Coder>(vars);
 
+bool declareError = false;
+
 %}
 
 %union {
@@ -42,7 +44,7 @@ std::shared_ptr<Coder> code = std::make_shared<Coder>(vars);
 %start program
 %type <number> value
 %type <number> identifier //address of p
-//%type <str> condition
+%type <number> condition //VM -> k
 //%type <string> declarations
 //%type <string> commands
 //%type <string> command
@@ -53,12 +55,23 @@ std::shared_ptr<Coder> code = std::make_shared<Coder>(vars);
 %left TIMES DIV MOD
 %%      
 
-program:        DECLARE declarations BEGINA commands END { vars->printUndefined(); code->printVM();}                                                   
+program:        DECLARE declarations BEGINA { if(declareError){YYABORT; }}
+                commands END { code->end(); vars->printUndefined(); code->printVM(); vars->printAll();}                                                   
                 |
-                BEGINA commands END 
+                BEGINA commands END { code->end(); }
 ;
 
-declarations:   declarations ',' pidentifier                { auto pid = $3; code->declareVariable(*pid); }
+declarations:   declarations ',' pidentifier                
+                {
+                  auto pid = $3; try{
+                    code->declareVariable(*pid); 
+                  }catch(std::runtime_error & err){
+                    yyerror(err.what());
+                    declareError = true;
+                  }
+
+                }
+
                 | declarations ',' pidentifier '(' num ':' num ')'    
                 {
                   auto pid = $3; auto beg = $5; auto end = $7; 
@@ -66,10 +79,19 @@ declarations:   declarations ',' pidentifier                { auto pid = $3; cod
                     code->declareArray(*pid,beg,end);
                   }catch(std::runtime_error & err){
                     yyerror(err.what());
-                    YYABORT;
+                    declareError = true;
                   }
                 }                                          
-                | pidentifier                               { auto pid = $1; code->declareVariable(*pid); }
+                | pidentifier
+                {
+                  auto pid = $1; try{
+                    code->declareVariable(*pid); 
+                  }catch(std::runtime_error & err){
+                    yyerror(err.what());
+                    declareError = true;
+                  }
+
+                }
                 | pidentifier '('num ':' num ')'  
                 {
                   auto pid = $1; auto beg = $3; auto end = $5;
@@ -77,7 +99,7 @@ declarations:   declarations ',' pidentifier                { auto pid = $3; cod
                     code->declareArray(*pid,beg,end);
                   }catch(std::runtime_error & err){
                     yyerror(err.what());
-                    YYABORT;
+                    declareError = true;
                   }
                 }
 ;
@@ -87,22 +109,29 @@ commands:       commands command
 ;
 
 
-command:        identifier ASSIGN expression ';'         { auto index = $1; auto value = $3; code->assignValueToVar(index,value); }                                                       
+command:        identifier ASSIGN expression ';'         { auto index = $1; auto value = $3; 
+                                                            try{
+                                                              code->assignValueToVar(index,value);
+                                                            }catch(std::runtime_error & err){
+                                                              yyerror(err.what());
+                                                              YYABORT;
+                                                            } 
+                                                          }                                                       
 
                 
                 | IF condition THEN commands                                                             
-                  ELSE { code->endif(1); code->startelse(); } 
+                  ELSE { code->startelse(); } 
                   commands 
                   ENDIF { code->endif(); }                                                                
 
                 | IF condition THEN commands 
                 ENDIF { code->endif(); }                                                 
 
-                | WHILE condition DO  {std::cerr<<"DO\n";}                                                                                                                                                          
-                  commands ENDWHILE   {std::cerr<<"ENDWHILE\n";}                                  
+                | WHILE 
+                  condition DO commands ENDWHILE   {auto conditionIndex = $2; code->endWhile(conditionIndex);}                                  
 
-                | DO                                                                    
-                  commands WHILE condition ENDDO                                        
+                | DO                              {code->stackJump();  }                                                                 
+                  commands WHILE condition ENDDO  {code->endDoWhile();}                                      
                                                                                         
                 | FOR pidentifier FROM value TO value DO                                
                         commands 
@@ -112,9 +141,9 @@ command:        identifier ASSIGN expression ';'         { auto index = $1; auto
                         commands 
                   ENDFOR                                                     
 
-                | READ identifier ';'                                                     
+                | READ identifier ';' { auto id = $2; code->read(id); }                                                     
 
-                | WRITE value ';'                                                       
+                | WRITE value ';'     { code->write(); }                                                     
 ;
 
 expression:     value                 { $$ = $1; code->getValue();      }                                              
@@ -125,29 +154,28 @@ expression:     value                 { $$ = $1; code->getValue();      }
                 | value MOD value                                                      
 ;
 
-condition:      value EQ value      { code->processEQ();  }              
-                | value NEQ value   { code->processNEQ();  }              
-                | value LE value    { code->processLE();  }              
-                | value GE value    { code->processGE();  }              
-                | value LEQ value   { code->processLEQ();  }              
-                | value GEQ value   { code->processGEQ();  }              
+condition:      value EQ value      { $$ = code->getCurrentPosition(); code->processEQ(); }              
+                | value NEQ value   { $$ = code->getCurrentPosition(); code->processNEQ();  }              
+                | value LE value    { $$ = code->getCurrentPosition(); code->processLE();  }              
+                | value GE value    { $$ = code->getCurrentPosition(); code->processGE();  }              
+                | value LEQ value   { $$ = code->getCurrentPosition(); code->processLEQ();  }              
+                | value GEQ value   { $$ = code->getCurrentPosition(); code->processGEQ();  }              
 ;
 
 value:          num                           { auto val = $1; $$ = val; code->stackValue(val); }                                                 
                 | identifier                  { auto index = $1; $$ = vars->getValueOfIndex(index); code->stackVariable(index); }                                                              
 ;
 
-identifier:     pidentifier                           { auto pid = $1; $$ = vars->getIndexOfVar(*(pid)); }                                                
-                | pidentifier '(' pidentifier ')'     { auto pid2 = $3; auto pid = $1; auto res = vars->getIndexOfVar(*pid2);
-                                                          $$ = vars->getIndexOfArrayElement(*pid,res); }                                        
-                | pidentifier '(' num ')'             { auto pid = $1; auto val = $3; $$ = vars->getIndexOfArrayElement(*pid,val); }                                       
+identifier:     pidentifier                           { auto pid = $1; try{$$ = vars->getIndexOfVar(*(pid));}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                                
+                | pidentifier '(' pidentifier ')'     { auto pid = $3; auto name = $1; try{$$ = vars->getIndexOfVar(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} code->setArrayToAccess(*name); }                                        
+                | pidentifier '(' num ')'             { auto pid = $1; auto val = $3; try{$$ = vars->getIndexOfArrayElement(*pid,val);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                       
 ;
 
 
 %%
 
 void yyerror(std::string err){
-  std::cerr << "\033[1;31m[ERROR]\033[0m " << err;
+  std::cerr << "\033[1;31m[ERROR]\033[0m " << err << std::endl;
 }
 
 int main(int argc, char** argv) {

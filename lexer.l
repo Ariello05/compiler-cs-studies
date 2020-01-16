@@ -14,6 +14,7 @@ PUNCT                   [\(\)\:\;\,]
 %x OPS
 
 %%
+"[".*"]"
 "DECLARE"               { return DECLARE; }
 "BEGIN"                 { return BEGINA; }
 "END"                   { return END; }

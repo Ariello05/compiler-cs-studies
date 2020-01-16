@@ -1,14 +1,7 @@
 DECLARE 
-    a,b
+    a,t(1:10)
 BEGIN
-    a ASSIGN 1;
-    IF 1 LE 1 THEN
-        a ASSIGN 2;
-            IF a GE 10 THEN
-                a ASSIGN 5;
-            ENDIF
-    ELSE
-    a ASSIGN 3;
-    ENDIF
+    a ASSIGN 2;
+    t(a) ASSIGN 3;
 
 END
