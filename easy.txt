@@ -1,0 +1,10 @@
+DECLARE 
+    a,b,t(5:10)
+BEGIN
+    a ASSIGN 5;
+    WHILE a LEQ 10 DO
+        WRITE a;
+        a ASSIGN a PLUS 1;  
+    ENDWHILE
+    
+END

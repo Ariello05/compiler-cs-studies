@@ -42,13 +42,13 @@ bool declareError = false;
 
 //Types
 %start program
-%type <number> value
-%type <number> identifier //address of p
+//%type <number> value
+//%type <number> identifier 
 %type <number> condition //VM -> k
 //%type <string> declarations
 //%type <string> commands
 //%type <string> command
-%type <number> expression
+%type <number> expression //VM -> k
 
 //Operators precedence
 %left PLUS MINUS
@@ -56,7 +56,10 @@ bool declareError = false;
 %%      
 
 program:        DECLARE declarations BEGINA { if(declareError){YYABORT; }}
-                commands END { code->end(); vars->printUndefined(); code->printVM(); vars->printAll();}                                                   
+                commands END {
+                   code->end(); vars->printUndefined(); code->printVM(); 
+                   //vars->printAll();
+                   }                                                   
                 |
                 BEGINA commands END { code->end(); }
 ;
@@ -109,9 +112,9 @@ commands:       commands command
 ;
 
 
-command:        identifier ASSIGN expression ';'         { auto index = $1; auto value = $3; 
+command:        identifier ASSIGN expression ';'         { auto injectPoint = $3; 
                                                             try{
-                                                              code->assignValueToVar(index,value);
+                                                              code->assignValueToVar(injectPoint);
                                                             }catch(std::runtime_error & err){
                                                               yyerror(err.what());
                                                               YYABORT;
@@ -133,42 +136,45 @@ command:        identifier ASSIGN expression ';'         { auto index = $1; auto
                 | DO                              {code->stackJump();  }                                                                 
                   commands WHILE condition ENDDO  {code->endDoWhile();}                                      
                                                                                         
-                | FOR pidentifier FROM value TO value DO                                
+                | FOR pidentifier FROM value TO value DO      {auto pid = $2; try{code->handleToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;}}                           
                         commands 
-                  ENDFOR              
+                  ENDFOR                                      {code->endFor(false);}    
 
-                | FOR pidentifier FROM value DOWNTO value DO                          
+                | FOR pidentifier FROM value DOWNTO value DO  {auto pid = $2; try{code->handleDownToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;}}                              
                         commands 
-                  ENDFOR                                                     
+                  ENDFOR                                      {code->endFor(true);}                        
 
-                | READ identifier ';' { auto id = $2; code->read(id); }                                                     
+                | READ identifier ';' { code->read(); }                                                     
 
-                | WRITE value ';'     { code->write(); }                                                     
+                | WRITE value ';'     { try{code->write();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                                     
 ;
 
-expression:     value                 { $$ = $1; code->getValue();      }                                              
-                | value PLUS value    { $$ = $1 + $3; code->addVars();  }                                                
-                | value MINUS value   { $$ = $1 - $3; code->subVars();  }                                                  
+expression:     value                 { $$ = code->getCurrentPosition(); code->getValue(); }                                              
+                | value PLUS value    { $$ = code->getCurrentPosition(); code->addVars();  }                                                
+                | value MINUS value   { $$ = code->getCurrentPosition(); code->subVars();  }                                                  
                 | value TIMES value                                                       
                 | value DIV value                                                       
                 | value MOD value                                                      
 ;
 
-condition:      value EQ value      { $$ = code->getCurrentPosition(); code->processEQ(); }              
+condition:      value EQ value      { $$ = code->getCurrentPosition(); code->processEQ();   }              
                 | value NEQ value   { $$ = code->getCurrentPosition(); code->processNEQ();  }              
-                | value LE value    { $$ = code->getCurrentPosition(); code->processLE();  }              
-                | value GE value    { $$ = code->getCurrentPosition(); code->processGE();  }              
+                | value LE value    { $$ = code->getCurrentPosition(); code->processLE();   }              
+                | value GE value    { $$ = code->getCurrentPosition(); code->processGE();   }              
                 | value LEQ value   { $$ = code->getCurrentPosition(); code->processLEQ();  }              
                 | value GEQ value   { $$ = code->getCurrentPosition(); code->processGEQ();  }              
 ;
 
-value:          num                           { auto val = $1; $$ = val; code->stackValue(val); }                                                 
-                | identifier                  { auto index = $1; $$ = vars->getValueOfIndex(index); code->stackVariable(index); }                                                              
+value:          num                           { auto val = $1; code->stackValue(val); }                                                 
+                | identifier                                                                               
 ;
 
-identifier:     pidentifier                           { auto pid = $1; try{$$ = vars->getIndexOfVar(*(pid));}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                                
-                | pidentifier '(' pidentifier ')'     { auto pid = $3; auto name = $1; try{$$ = vars->getIndexOfVar(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} code->setArrayToAccess(*name); }                                        
-                | pidentifier '(' num ')'             { auto pid = $1; auto val = $3; try{$$ = vars->getIndexOfArrayElement(*pid,val);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                       
+identifier:     pidentifier                           { auto pid = $1; try{code->stackVariable(*pid);}
+                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }    
+                | pidentifier '(' pidentifier ')'     { auto pid = $3; auto name = $1; try{code->stackArrayWithVariable(*pid,*name);}
+                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                        
+                | pidentifier '(' num ')'             { auto pid = $1; auto val = $3; try{code->stackArrayWithConst(val,*pid);}
+                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                       
 ;
 
 

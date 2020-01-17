@@ -13,21 +13,46 @@ namespace machine{
 
 }
 
+                //ARRAY(CONST) is treated as variable
+enum IDENTIFIER {ARRAYVAR,CONSTVALUE,VARIABLE};
 class SmartBlock{//Helper
     public:
-    SmartBlock(bool isVariable, long long value, string arrayName = ""){
-        this->isVariable = isVariable;
+    SmartBlock(IDENTIFIER type, long long value=0 , long long varName =0, long long arrayName = 0){
+        this->type = type;
+        switch(type){
+            case ARRAYVAR:
+                if(varName == 0){
+                    throw std::runtime_error("Define varName!");
+                }
+                if(arrayName == 0){
+                    throw std::runtime_error("Define arrayName!");
+                }
+                break;
+            case CONSTVALUE:
+                if(value == 0){
+                    throw std::runtime_error("Define value!");
+                }
+                break;
+            case VARIABLE:
+                if(varName == 0){
+                    throw std::runtime_error("Define varName!");
+                }
+                break;
+        }
         this->value = value;
-        this->arrayName = arrayName;
+        this->arrayStartIndex = arrayName;
+        this->variableIndex = varName;
     }
     SmartBlock& operator=(SmartBlock & two){
-        this->isVariable = two.isVariable;
+        this->type = two.type;
         this->value = two.value;
-        this->arrayName = two.arrayName;
+        this->arrayStartIndex = two.arrayStartIndex;
+        this->variableIndex = two.variableIndex;
         return *this;
     }
-    bool isVariable;
-    string arrayName;
+    IDENTIFIER type;
+    long long variableIndex;
+    long long arrayStartIndex;
     long long value;
 };
 
@@ -53,24 +78,32 @@ public:
     void declareVariable(string name);
 
     /* VALUE BLOCK */
-    void stackVariable(long long index);
-    void stackValue(long long value);
-    void clearStack();
+    //void clearStack();
 
-    void accessArrayWithVariable(long long variable);
-    long long loadIdentifier(long long pid);
-    void setArrayToAccess(string array);
+    //void accessArrayWithVariable(long long variable);
+    //long long loadIdentifier(long long pid);
+
+    void stackValue(long long value);
+    void stackVariable(string var);
+    void stackArrayWithConst(long long value, string array);
+    void stackArrayWithVariable(string var, string array);
+
+    //void setArrayToAccess(string array);
     
     /* COMMAND BLOCK */
-    void assignValueToVar(long long id, long long value);
+    void assignValueToVar(long long injectPoint);
     void endif();
     void startelse();
     void stackJump();
     void endWhile(long long start);
     void endDoWhile();
-    void read(long long pid);
+    void handleToFor(string iterator);
+    void handleDownToFor(string iterator);
+    void endFor(bool dec);
+    void read();
     void write();//USES STACK
     void end();
+
 
     //void declareVar(long long pid);
 
@@ -80,13 +113,14 @@ public:
 
 
 private:
-    void defineValue(long long value);//returns address to memory
+    void loadArrayWithVariable(long long arrayIndex, long long varIndex);//Load value of array at variable
+    void defineValue(long long value);
+    void defineValue(std::vector<string> & storeCode, long long value);
 
-    string arrayLocal;
     std::vector<string> vm;
     std::shared_ptr<MemoryController> mc;
     std::stack<SmartBlock> args;
-    std::stack<long long> loopJumps;
+    //std::stack<long long> loopJumps;
     std::stack<long long> jumps;
 
 };

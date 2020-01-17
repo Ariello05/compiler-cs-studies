@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 #include <exception>
+#include <vector>
 #include "structs.hpp"
 
 
@@ -32,8 +33,16 @@ public:
 
     }
 
+    long long getBegin(){
+        return begin;
+    }
+
     long long getFirstOffsetedIndex(){
         return memblockstart - begin;
+    }
+
+    long long getLastOffsetedIndex(){
+        return memblockstart - begin + end;
     }
 
     long long getMemBlockIndex(long long item){
@@ -86,7 +95,9 @@ public:
     long long declareValue(long long value);
     long long declareArray(string name, long long begin, long long end);
     long long declareSpecial(string name);
+    long long pushIterator(string name);
 
+    long long popIterator();
     long long smartGetSpecialIndex(string name);
 
     void setValueIn(string name, long long value);
@@ -106,7 +117,13 @@ public:
     long long getIndexOfVar(string name);
     long long getIndexOfArrayElement(string name, long long element);
     long long getIndexOfSpecial(string name);
+    long long getIndexOfCurrentIterator();
+    bool isIterator(string name);
+    bool isIterator(long long index);
     Array getArray(string name);
+
+    void clearFlagsInArray(long long start);
+    void clearFlagsInArray(string name);
 
     MTYPE getTypeOfIndex(long long index);
     long long getFreeIndex();
@@ -122,5 +139,6 @@ private:
     std::map<string, long long> variables;
     std::map<string, Array> arrays;
     std::map<string, long long> specials;
+    std::vector<string> iterators;//TODO: what if eg. for i .. endfor ... for i .. endfor
     long long indexer;
 };

@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <exception>
+#include <iostream>
 
 using std::string;
 
@@ -12,7 +13,7 @@ using std::string;
  * CONST - local constant 
  * AC - register
 */
-enum MTYPE {ARRAY, VARIABLE, CONST, AC, SPECIAL};
+enum MTYPE {ARRAY, VAR, CONST, AC, SPECIAL, ITERATOR};
 
 /**
  * Container for virtual machine memory blocks 

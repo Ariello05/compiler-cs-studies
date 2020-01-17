@@ -7,36 +7,15 @@ INC
 STORE 3
 SUB 0
 INC
-SHIFT 1
-STORE 5
-SUB 0
-INC
-SHIFT 1
-INC
-STORE 16
-SUB 0
-INC
 SHIFT 2
 INC
+STORE 5
+JPOS 20
+LOAD 5
+PUT
+SUB 0
+INC
 ADD 5
-STORE 4
-LOAD 16
-STOREI 4
+STORE 5
+JUMP 12
 HALT
-[AC			| Index:0	Value:3]
-[CONST		| Index:1	Value:1]
-[CONST		| Index:2	Value:2]
-[CONST		| Index:3	Value:3]
-[SPECIAL	| Index:4	Value:7]
-[VARIABLE	| Index:5	Value:2]
-[ARRAY		| Index:6	Value:undef]
-[ARRAY		| Index:7	Value:undef]
-[ARRAY		| Index:8	Value:undef]
-[ARRAY		| Index:9	Value:undef]
-[ARRAY		| Index:10	Value:undef]
-[ARRAY		| Index:11	Value:undef]
-[ARRAY		| Index:12	Value:undef]
-[ARRAY		| Index:13	Value:undef]
-[ARRAY		| Index:14	Value:undef]
-[ARRAY		| Index:15	Value:undef]
-[SPECIAL	| Index:16	Value:undef]

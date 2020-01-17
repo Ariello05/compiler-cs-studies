@@ -1,7 +1,13 @@
 DECLARE 
-    a,t(1:10)
+    a,b,t(2:120)
 BEGIN
-    a ASSIGN 2;
-    t(a) ASSIGN 3;
+
+    FOR i FROM 2 TO 10 DO
+        t(i) ASSIGN i;
+    ENDFOR
+
+    FOR i FROM 10 DOWNTO 2 DO
+        WRITE t(i);
+    ENDFOR
 
 END
