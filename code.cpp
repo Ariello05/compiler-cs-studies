@@ -423,8 +423,8 @@ void Coder::stackJump(){
 }
 
 void Coder::endWhile(long long start){
-    if(jumps.size() != 1){
-        throw std::runtime_error("Jump stack should be of size 1!");   
+    if(jumps.size() < 1){
+        throw std::runtime_error("Jump stack should be of size atleast 1!");   
     }
     auto current = vm.size();
     auto ifjump = jumps.top();
@@ -434,8 +434,8 @@ void Coder::endWhile(long long start){
 }
 
 void Coder::endDoWhile(){//TODO: fix this abomination
-    if(jumps.size() != 2){
-        throw std::runtime_error("Jump stack should be of size 2!");   
+    if(jumps.size() < 2){
+        throw std::runtime_error("Jump stack should be of size atleast 2!");   
     }
     auto ifjump = jumps.top();
     jumps.pop();
@@ -866,7 +866,7 @@ void Coder::defineValue(long long value){
     //TODO: Optimize this definition
     vm.push_back("SUB 0");
     int i = 63;
-    while(bits[i] == 0 && i>0){
+    while(bits[i] == 0 && i>=0){
         --i;
     }
     if(i == -1){
@@ -928,7 +928,7 @@ void Coder::defineValue(std::vector<string> & storeCode, long long value){
     //TODO: Optimize this definition
     storeCode.push_back("SUB 0");
     int i = 63;
-    while(bits[i] == 0 && i>0){
+    while(bits[i] == 0 && i>=0){
         --i;
     }
     if(i == -1){
