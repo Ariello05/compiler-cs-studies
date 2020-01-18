@@ -17,7 +17,7 @@ namespace machine{
 enum IDENTIFIER {ARRAYVAR,CONSTVALUE,VARIABLE};
 class SmartBlock{//Helper
     public:
-    SmartBlock(IDENTIFIER type, long long value=0 , long long varName =0, long long arrayName = 0){
+    SmartBlock(IDENTIFIER type, long long value=0 , long long varName =0, long long arrayName = 0, string name = ""){
         this->type = type;
         switch(type){
             case ARRAYVAR:
@@ -28,10 +28,10 @@ class SmartBlock{//Helper
                     throw std::runtime_error("Define arrayName!");
                 }
                 break;
-            case CONSTVALUE:
-                if(value == 0){
-                    throw std::runtime_error("Define value!");
-                }
+            case CONSTVALUE://TODO : rethink
+                //if(value == 0){
+                //    throw std::runtime_error("Define value!");
+                //}
                 break;
             case VARIABLE:
                 if(varName == 0){
@@ -42,6 +42,7 @@ class SmartBlock{//Helper
         this->value = value;
         this->arrayStartIndex = arrayName;
         this->variableIndex = varName;
+        this->name = name;
     }
     SmartBlock& operator=(SmartBlock & two){
         this->type = two.type;
@@ -54,6 +55,7 @@ class SmartBlock{//Helper
     long long variableIndex;
     long long arrayStartIndex;
     long long value;
+    string name;
 };
 
 class Coder{
@@ -83,6 +85,7 @@ public:
     //void accessArrayWithVariable(long long variable);
     //long long loadIdentifier(long long pid);
 
+    void verifyStack();
     void stackValue(long long value);
     void stackVariable(string var);
     void stackArrayWithConst(long long value, string array);
@@ -113,7 +116,7 @@ public:
 
 
 private:
-    void loadArrayWithVariable(long long arrayIndex, long long varIndex);//Load value of array at variable
+    void loadArrayVar(long long arrayIndex, long long varIndex);//Load value of array at variable
     void defineValue(long long value);
     void defineValue(std::vector<string> & storeCode, long long value);
 

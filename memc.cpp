@@ -89,27 +89,57 @@ long long MemoryController::smartGetSpecialIndex(string name){
     }
 }
 
-long long MemoryController::pushIterator(string name){
-    if(variables.find(name) != variables.end()){
-        throw std::runtime_error("Variable: " + name + " is already defined!");
-    }                                                                       //TODO: 0 flag, better way?
-    blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(0,MTYPE::ITERATOR,name))));//WE HOLD VARIABLE AT SOME INDEX
-    variables.insert(std::make_pair(name,indexer));//ITERATOR IS ALSO A VARIABLE
-    iterators.push_back(name);
-
-    ++indexer;
-    return indexer-1;
+long long MemoryController::pushSimpleIterator(string name){
+    auto f = pushIterator(name,false);
+    
+    return f.getIteratorIndex();
 }
 
+ForLoopBlock MemoryController::pushIterator(string name, bool isSpecial){
+    if(!isSpecial){
+        if(variables.find(name) != variables.end()){
+            throw std::runtime_error("Variable: " + name + " is already defined!");
+        }                                                                       //TODO: 0 flag, better way?
+        blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(0,MTYPE::ITERATOR,name))));//WE HOLD VARIABLE AT SOME INDEX
+        variables.insert(std::make_pair(name,indexer));//ITERATOR IS ALSO A VARIABLE
+        ForLoopBlock f(name,indexer);
+        iterators.push_back(f);
+
+        ++indexer;
+        return f;
+    }
+    else{
+        if(variables.find(name) != variables.end()){
+            throw std::runtime_error("Variable: " + name + " is already defined!");
+        }                                                                       //TODO: 0 flag, better way?
+        blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(0,MTYPE::ITERATOR,name))));//WE HOLD VARIABLE AT SOME INDEX
+        variables.insert(std::make_pair(name,indexer));//ITERATOR IS ALSO A VARIABLE
+        ++indexer;
+        blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(0,MTYPE::SPECIAL,name))));//WE HOLD VARIABLE AT SOME INDEX
+        ++indexer;
+        ForLoopBlock f(name,indexer-2,indexer-1);
+        iterators.push_back(f);
+
+        return f;
+    }
+}
+
+//Returns index of iterator
 long long MemoryController::popIterator(){
-    auto name = iterators.back();
-    auto ob = variables.find(name);
+    auto forblock = iterators.back();
+    auto ob = variables.find(forblock.getName());
     if(ob == variables.end()){
         throw std::runtime_error("Error in iterator???");
     }
     auto index = ob->second;
-    variables.erase(name);//TODO: mark old index as usable again
+    variables.erase(forblock.getName());//TODO: mark old index as usable again
     iterators.pop_back();
+    blocks.erase(index);
+    if(forblock.isSpecial()){
+        std::cerr<<"XD\n";
+        blocks.erase(forblock.getSpecialIndex());//TODO: mark old index as usable again
+    }
+    //getBlock(index)->undef();
     return index;
 }
 
@@ -247,19 +277,27 @@ long long MemoryController::getIndexOfSpecial(string name){
 }
 
 long long MemoryController::getIndexOfCurrentIterator(){
-    auto name = iterators.back();
-    auto index = variables.find(name);
+    auto forblock = iterators.back();
+    auto index = variables.find(forblock.getName());
     if(index == variables.end()){
         throw std::runtime_error("Error in iterator???");
     }
     return index->second;
 }
 
+bool MemoryController::isUndef(long long id){
+    auto block = getBlock(id);
+    if(block == nullptr){
+        throw std::runtime_error("No memory allocated at this id:" +std::to_string(id) );
+    }
+    return !block->isDefined();
+}
+
 bool MemoryController::isIterator(string name){
     auto begin = iterators.begin();
     const auto end = iterators.end();
     while(begin != end){
-        if(*begin == name){
+        if((*begin).getName() == name){
             return true;
         }
         ++begin;

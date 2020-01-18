@@ -95,7 +95,8 @@ public:
     long long declareValue(long long value);
     long long declareArray(string name, long long begin, long long end);
     long long declareSpecial(string name);
-    long long pushIterator(string name);
+    long long pushSimpleIterator(string name);
+    ForLoopBlock pushIterator(string name, bool isSpecial);
 
     long long popIterator();
     long long smartGetSpecialIndex(string name);
@@ -118,6 +119,7 @@ public:
     long long getIndexOfArrayElement(string name, long long element);
     long long getIndexOfSpecial(string name);
     long long getIndexOfCurrentIterator();
+    bool isUndef(long long id);
     bool isIterator(string name);
     bool isIterator(long long index);
     Array getArray(string name);
@@ -130,7 +132,8 @@ public:
     void printUndefined();
     void printAll();
 
-    const string special = ".Array";
+    const string forward = ".AssignForward";
+    const string local = ".LocalArray";
 
 private:
     //Most of the work is done in blocks which holds pairs index in memory - memblocks(VALUE)
@@ -139,6 +142,6 @@ private:
     std::map<string, long long> variables;
     std::map<string, Array> arrays;
     std::map<string, long long> specials;
-    std::vector<string> iterators;//TODO: what if eg. for i .. endfor ... for i .. endfor
+    std::vector<ForLoopBlock> iterators;//TODO: what if eg. for i .. endfor ... for i .. endfor
     long long indexer;
 };

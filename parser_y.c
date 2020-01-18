@@ -80,7 +80,7 @@
 int yylex();
 int yyparse();
 void yyerror(std::string er);
-void yyabort();
+//void YYABORT();
 //extern FILE *yyin;
 extern int yylineno;
 
@@ -483,11 +483,11 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    58,    58,    58,    64,    67,    78,    88,    98,   110,
-     111,   115,   126,   125,   130,   133,   136,   136,   139,   139,
-     143,   143,   147,   149,   152,   153,   154,   155,   156,   157,
-     160,   161,   162,   163,   164,   165,   168,   169,   172,   174,
-     176
+       0,    58,    58,    58,    66,    69,    80,    90,   100,   112,
+     113,   117,   128,   127,   132,   135,   138,   138,   141,   141,
+     146,   146,   151,   153,   157,   158,   159,   160,   161,   162,
+     165,   166,   167,   168,   169,   170,   173,   174,   178,   181,
+     184
 };
 #endif
 
@@ -1359,27 +1359,29 @@ yyreduce:
     {
   case 2:
 #line 58 "parser.ypp"
-    { if(declareError){YYABORT; }}
-#line 1364 "parser_y.c"
+    { if(declareError){YYABORT;
+                                         }}
+#line 1365 "parser_y.c"
     break;
 
   case 3:
-#line 59 "parser.ypp"
+#line 60 "parser.ypp"
     {
                    code->end(); vars->printUndefined(); code->printVM(); 
                    //vars->printAll();
+                   std::cerr << "\033[1;32m[SUCCESS]\033[0m " << std::endl;
                    }
-#line 1373 "parser_y.c"
+#line 1375 "parser_y.c"
     break;
 
   case 4:
-#line 64 "parser.ypp"
-    { code->end(); }
-#line 1379 "parser_y.c"
+#line 66 "parser.ypp"
+    { code->end(); std::cerr << "\033[1;32m[SUCCESS]\033[0m " << std::endl; }
+#line 1381 "parser_y.c"
     break;
 
   case 5:
-#line 68 "parser.ypp"
+#line 70 "parser.ypp"
     {
                   auto pid = (yyvsp[0].str); try{
                     code->declareVariable(*pid); 
@@ -1389,11 +1391,11 @@ yyreduce:
                   }
 
                 }
-#line 1393 "parser_y.c"
+#line 1395 "parser_y.c"
     break;
 
   case 6:
-#line 79 "parser.ypp"
+#line 81 "parser.ypp"
     {
                   auto pid = (yyvsp[-5].str); auto beg = (yyvsp[-3].number); auto end = (yyvsp[-1].number); 
                   try{
@@ -1403,11 +1405,11 @@ yyreduce:
                     declareError = true;
                   }
                 }
-#line 1407 "parser_y.c"
+#line 1409 "parser_y.c"
     break;
 
   case 7:
-#line 89 "parser.ypp"
+#line 91 "parser.ypp"
     {
                   auto pid = (yyvsp[0].str); try{
                     code->declareVariable(*pid); 
@@ -1417,11 +1419,11 @@ yyreduce:
                   }
 
                 }
-#line 1421 "parser_y.c"
+#line 1423 "parser_y.c"
     break;
 
   case 8:
-#line 99 "parser.ypp"
+#line 101 "parser.ypp"
     {
                   auto pid = (yyvsp[-5].str); auto beg = (yyvsp[-3].number); auto end = (yyvsp[-1].number);
                   try{
@@ -1431,11 +1433,11 @@ yyreduce:
                     declareError = true;
                   }
                 }
-#line 1435 "parser_y.c"
+#line 1437 "parser_y.c"
     break;
 
   case 11:
-#line 115 "parser.ypp"
+#line 117 "parser.ypp"
     { auto injectPoint = (yyvsp[-1].number); 
                                                             try{
                                                               code->assignValueToVar(injectPoint);
@@ -1444,164 +1446,177 @@ yyreduce:
                                                               YYABORT;
                                                             } 
                                                           }
-#line 1448 "parser_y.c"
+#line 1450 "parser_y.c"
     break;
 
   case 12:
-#line 126 "parser.ypp"
+#line 128 "parser.ypp"
     { code->startelse(); }
-#line 1454 "parser_y.c"
+#line 1456 "parser_y.c"
     break;
 
   case 13:
-#line 128 "parser.ypp"
+#line 130 "parser.ypp"
     { code->endif(); }
-#line 1460 "parser_y.c"
+#line 1462 "parser_y.c"
     break;
 
   case 14:
-#line 131 "parser.ypp"
+#line 133 "parser.ypp"
     { code->endif(); }
-#line 1466 "parser_y.c"
+#line 1468 "parser_y.c"
     break;
 
   case 15:
-#line 134 "parser.ypp"
+#line 136 "parser.ypp"
     {auto conditionIndex = (yyvsp[-3].number); code->endWhile(conditionIndex);}
-#line 1472 "parser_y.c"
+#line 1474 "parser_y.c"
     break;
 
   case 16:
-#line 136 "parser.ypp"
+#line 138 "parser.ypp"
     {code->stackJump();  }
-#line 1478 "parser_y.c"
+#line 1480 "parser_y.c"
     break;
 
   case 17:
-#line 137 "parser.ypp"
+#line 139 "parser.ypp"
     {code->endDoWhile();}
-#line 1484 "parser_y.c"
+#line 1486 "parser_y.c"
     break;
 
   case 18:
-#line 139 "parser.ypp"
-    {auto pid = (yyvsp[-5].str); try{code->handleToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;}}
-#line 1490 "parser_y.c"
+#line 141 "parser.ypp"
+    {auto pid = (yyvsp[-5].str); try{code->handleToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                                }}
+#line 1493 "parser_y.c"
     break;
 
   case 19:
-#line 141 "parser.ypp"
+#line 144 "parser.ypp"
     {code->endFor(false);}
-#line 1496 "parser_y.c"
+#line 1499 "parser_y.c"
     break;
 
   case 20:
-#line 143 "parser.ypp"
-    {auto pid = (yyvsp[-5].str); try{code->handleDownToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;}}
-#line 1502 "parser_y.c"
+#line 146 "parser.ypp"
+    {auto pid = (yyvsp[-5].str); try{code->handleDownToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                              }}
+#line 1506 "parser_y.c"
     break;
 
   case 21:
-#line 145 "parser.ypp"
+#line 149 "parser.ypp"
     {code->endFor(true);}
-#line 1508 "parser_y.c"
+#line 1512 "parser_y.c"
     break;
 
   case 22:
-#line 147 "parser.ypp"
+#line 151 "parser.ypp"
     { code->read(); }
-#line 1514 "parser_y.c"
+#line 1518 "parser_y.c"
     break;
 
   case 23:
-#line 149 "parser.ypp"
-    { try{code->write();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }
-#line 1520 "parser_y.c"
+#line 153 "parser.ypp"
+    { try{code->write();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                } }
+#line 1525 "parser_y.c"
     break;
 
   case 24:
-#line 152 "parser.ypp"
+#line 157 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->getValue(); }
-#line 1526 "parser_y.c"
+#line 1531 "parser_y.c"
     break;
 
   case 25:
-#line 153 "parser.ypp"
+#line 158 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->addVars();  }
-#line 1532 "parser_y.c"
+#line 1537 "parser_y.c"
     break;
 
   case 26:
-#line 154 "parser.ypp"
+#line 159 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->subVars();  }
-#line 1538 "parser_y.c"
+#line 1543 "parser_y.c"
     break;
 
   case 30:
-#line 160 "parser.ypp"
+#line 165 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processEQ();   }
-#line 1544 "parser_y.c"
+#line 1549 "parser_y.c"
     break;
 
   case 31:
-#line 161 "parser.ypp"
+#line 166 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processNEQ();  }
-#line 1550 "parser_y.c"
+#line 1555 "parser_y.c"
     break;
 
   case 32:
-#line 162 "parser.ypp"
+#line 167 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processLE();   }
-#line 1556 "parser_y.c"
+#line 1561 "parser_y.c"
     break;
 
   case 33:
-#line 163 "parser.ypp"
+#line 168 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processGE();   }
-#line 1562 "parser_y.c"
+#line 1567 "parser_y.c"
     break;
 
   case 34:
-#line 164 "parser.ypp"
+#line 169 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processLEQ();  }
-#line 1568 "parser_y.c"
+#line 1573 "parser_y.c"
     break;
 
   case 35:
-#line 165 "parser.ypp"
+#line 170 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processGEQ();  }
-#line 1574 "parser_y.c"
+#line 1579 "parser_y.c"
     break;
 
   case 36:
-#line 168 "parser.ypp"
+#line 173 "parser.ypp"
     { auto val = (yyvsp[0].number); code->stackValue(val); }
-#line 1580 "parser_y.c"
+#line 1585 "parser_y.c"
+    break;
+
+  case 37:
+#line 174 "parser.ypp"
+    { try{code->verifyStack();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                              } }
+#line 1592 "parser_y.c"
     break;
 
   case 38:
-#line 172 "parser.ypp"
+#line 178 "parser.ypp"
     { auto pid = (yyvsp[0].str); try{code->stackVariable(*pid);}
-                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }
-#line 1587 "parser_y.c"
+                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                            } }
+#line 1600 "parser_y.c"
     break;
 
   case 39:
-#line 174 "parser.ypp"
+#line 181 "parser.ypp"
     { auto pid = (yyvsp[-1].str); auto name = (yyvsp[-3].str); try{code->stackArrayWithVariable(*pid,*name);}
-                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }
-#line 1594 "parser_y.c"
+                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                            } }
+#line 1608 "parser_y.c"
     break;
 
   case 40:
-#line 176 "parser.ypp"
+#line 184 "parser.ypp"
     { auto pid = (yyvsp[-3].str); auto val = (yyvsp[-1].number); try{code->stackArrayWithConst(val,*pid);}
-                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }
-#line 1601 "parser_y.c"
+                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                            } }
+#line 1616 "parser_y.c"
     break;
 
 
-#line 1605 "parser_y.c"
+#line 1620 "parser_y.c"
 
       default: break;
     }
@@ -1833,7 +1848,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 181 "parser.ypp"
+#line 190 "parser.ypp"
 
 
 void yyerror(std::string err){
@@ -1843,6 +1858,6 @@ void yyerror(std::string err){
 int main(int argc, char** argv) {
 
         yyparse();
-        
+
         return 0;
 }

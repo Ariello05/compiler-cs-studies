@@ -11,7 +11,7 @@
 int yylex();
 int yyparse();
 void yyerror(std::string er);
-void yyabort();
+//void YYABORT();
 //extern FILE *yyin;
 extern int yylineno;
 
@@ -55,13 +55,15 @@ bool declareError = false;
 %left TIMES DIV MOD
 %%      
 
-program:        DECLARE declarations BEGINA { if(declareError){YYABORT; }}
+program:        DECLARE declarations BEGINA { if(declareError){YYABORT;
+                                         }}
                 commands END {
                    code->end(); vars->printUndefined(); code->printVM(); 
                    //vars->printAll();
+                   std::cerr << "\033[1;32m[SUCCESS]\033[0m " << std::endl;
                    }                                                   
                 |
-                BEGINA commands END { code->end(); }
+                BEGINA commands END { code->end(); std::cerr << "\033[1;32m[SUCCESS]\033[0m " << std::endl; }
 ;
 
 declarations:   declarations ',' pidentifier                
@@ -136,17 +138,20 @@ command:        identifier ASSIGN expression ';'         { auto injectPoint = $3
                 | DO                              {code->stackJump();  }                                                                 
                   commands WHILE condition ENDDO  {code->endDoWhile();}                                      
                                                                                         
-                | FOR pidentifier FROM value TO value DO      {auto pid = $2; try{code->handleToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;}}                           
+                | FOR pidentifier FROM value TO value DO      {auto pid = $2; try{code->handleToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                                }}                           
                         commands 
                   ENDFOR                                      {code->endFor(false);}    
 
-                | FOR pidentifier FROM value DOWNTO value DO  {auto pid = $2; try{code->handleDownToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;}}                              
+                | FOR pidentifier FROM value DOWNTO value DO  {auto pid = $2; try{code->handleDownToFor(*pid);}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                              }}                              
                         commands 
                   ENDFOR                                      {code->endFor(true);}                        
 
                 | READ identifier ';' { code->read(); }                                                     
 
-                | WRITE value ';'     { try{code->write();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                                     
+                | WRITE value ';'     { try{code->write();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                } }                                                     
 ;
 
 expression:     value                 { $$ = code->getCurrentPosition(); code->getValue(); }                                              
@@ -166,15 +171,19 @@ condition:      value EQ value      { $$ = code->getCurrentPosition(); code->pro
 ;
 
 value:          num                           { auto val = $1; code->stackValue(val); }                                                 
-                | identifier                                                                               
+                | identifier                  { try{code->verifyStack();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                              } }                                                            
 ;
 
 identifier:     pidentifier                           { auto pid = $1; try{code->stackVariable(*pid);}
-                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }    
+                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                            } }    
                 | pidentifier '(' pidentifier ')'     { auto pid = $3; auto name = $1; try{code->stackArrayWithVariable(*pid,*name);}
-                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                        
+                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                            } }                                        
                 | pidentifier '(' num ')'             { auto pid = $1; auto val = $3; try{code->stackArrayWithConst(val,*pid);}
-                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;} }                                       
+                                                            catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
+                                                            } }                                       
 ;
 
 
@@ -187,6 +196,6 @@ void yyerror(std::string err){
 int main(int argc, char** argv) {
 
         yyparse();
-        
+
         return 0;
 }

@@ -7,7 +7,7 @@ Coder::Coder(std::shared_ptr<MemoryController> mc){
     auto a = mc->declareValue(1);
     auto b = mc->declareValue(2);
     auto c = mc->declareValue(3);
-    mc->declareSpecial(mc->special);
+    mc->declareSpecial(mc->forward);
     vm.push_back("SUB 0");
     vm.push_back("INC");
     vm.push_back("STORE " + std::to_string(a));
@@ -58,6 +58,11 @@ void Coder::addVars(){
                 break;
 
                 case ARRAYVAR:{// 1 + t(a)
+                    auto id = mc->declareValue(first.value);
+                    defineValue(first.value);
+                    vm.push_back("STORE " + std::to_string(id));
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    vm.push_back("ADD " + std::to_string(id));
                 }
                 break;
             }
@@ -66,28 +71,46 @@ void Coder::addVars(){
 
         case VARIABLE:{
             switch(second.type){
-                case CONSTVALUE:// a + 1
+                case CONSTVALUE:{// a + 1
                     defineValue(second.value);
                     vm.push_back("ADD " + std::to_string(first.variableIndex));
-                    break;
-                case VARIABLE:// a + b
+                }break;
+
+                case VARIABLE:{// a + b
                     vm.push_back("LOAD " + std::to_string(first.variableIndex));
                     vm.push_back("ADD " + std::to_string(second.variableIndex));
-                    break;
-                case ARRAYVAR:// a + t(a)
-                    break;
+                }break;
+
+                case ARRAYVAR:{// a + t(a)
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    vm.push_back("ADD " + std::to_string(first.variableIndex));
+                }break;
             }
         }
         break;
 
         case ARRAYVAR:{
             switch(second.type){
-                case CONSTVALUE:// t(a) + 1
-                    break;
-                case VARIABLE:// t(a) + b
-                    break;
-                case ARRAYVAR:// t(a) + t(b)
-                    break;
+                case CONSTVALUE:{// t(a) + 1
+                    auto id = mc->declareValue(second.value);
+                    defineValue(second.value);
+                    vm.push_back("STORE " + std::to_string(id));
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("ADD " + std::to_string(id));
+                }break;
+
+                case VARIABLE:{// t(a) + b
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("ADD " + std::to_string(second.variableIndex));
+                }break;
+
+                case ARRAYVAR:{// t(a) + t(b)
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    auto id = mc->smartGetSpecialIndex(mc->local);
+                    vm.push_back("STORE " + std::to_string(id));
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    vm.push_back("ADD " + std::to_string(id));
+                }break;
             }
         }
         break;
@@ -100,68 +123,90 @@ void Coder::subVars(){
     }
     auto second = args.top(); args.pop();//right
     auto first = args.top(); args.pop();//left
+//TODO: Serch variables for samealike const values?
+    switch(first.type){
+        case CONSTVALUE:{
+            switch(second.type){
+                case CONSTVALUE:{// 1 - 1
+                    auto id = mc->declareValue(first.value);
+                    defineValue(first.value);
+                    vm.push_back("STORE " + std::to_string(id));
+                    //mc->declareValue(second.value); TODO: we actully might want to declare space for it
+                    defineValue(second.value);
+                    vm.push_back("SUB " + std::to_string(id));
+                }
+                break;
 
-    //TODO: Serch variables for samealike const values?
-    /*//TODO: COPY ADDING
-    if(!first.isVariable && second.isVariable){
-        if(first.value == mc->getValueOfIndex(0)){//TODO: what if AC is overflown
-            vm.push_back("SUB " + std::to_string(second.value));
-            return;
+                case VARIABLE:{// 1 - a
+                    defineValue(first.value);
+                    vm.push_back("SUB " + std::to_string(second.variableIndex));
+                }
+                break;
+
+                case ARRAYVAR:{// 1 - t(a)
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    auto id = mc->smartGetSpecialIndex(mc->local);
+                    vm.push_back("STORE " + std::to_string(id));
+                    defineValue(first.value);
+                    vm.push_back("SUB " + std::to_string(id));
+                }
+                break;
+            }
         }
+        break;
 
-        defineValue(first.value);
-        vm.push_back("SUB " + std::to_string(second.value));
+        case VARIABLE:{
+            switch(second.type){
+                case CONSTVALUE:{// a - 1
+                    auto id = mc->declareValue(second.value);
+                    defineValue(second.value);
+                    vm.push_back("STORE " + std::to_string(id));
+                    vm.push_back("LOAD " + std::to_string(first.variableIndex));
+                    vm.push_back("SUB " + std::to_string(id));
+                }break;
 
-    }else if(first.isVariable && !second.isVariable){
-        if(second.value == mc->getValueOfIndex(0)){//TODO: what if AC is overflown
-            auto id = mc->declareValue(second.value);
-            vm.push_back("STORE " + std::to_string(id));
-            vm.push_back("LOAD " + std::to_string(first.value));
-            vm.push_back("SUB " + std::to_string(id));
-            return;
+                case VARIABLE:{// a - b
+                    vm.push_back("LOAD " + std::to_string(first.variableIndex));
+                    vm.push_back("SUB " + std::to_string(second.variableIndex));
+                }break;
+
+                case ARRAYVAR:{// a - t(a)
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    auto id = mc->smartGetSpecialIndex(mc->local);
+                    vm.push_back("STORE " + std::to_string(id));
+                    vm.push_back("LOAD " + std::to_string(first.variableIndex));
+                    vm.push_back("SUB " + std::to_string(id));
+                }break;
+            }
         }
+        break;
 
-        auto id = mc->declareValue(second.value);
-        defineValue(second.value);
-        vm.push_back("STORE " + std::to_string(id));
-        vm.push_back("LOAD " + std::to_string(first.value));
-        vm.push_back("SUB " + std::to_string(id));
+        case ARRAYVAR:{
+            switch(second.type){
+                case CONSTVALUE:{// t(a) - 1
+                    auto id = mc->declareValue(second.value);
+                    defineValue(second.value);
+                    vm.push_back("STORE " + std::to_string(id));
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("SUB " + std::to_string(id));
+                }break;
 
-    }else if(first.isVariable && second.isVariable){
-        if(mc->getValueOfIndex(first.value) == mc->getValueOfIndex(0)){//TODO: what if AC is overflown
-            vm.push_back("SUB " + std::to_string(second.value));
-            return;
-        }
-        //else if(mc->getValueOfIndex(second.value) == mc->getValueOfIndex(0)){//TODO: what if AC is overflown
-        //    vm.push_back("SUB " + std::to_string(first.value));
-        //    return;
-        //}
-        else{
-            vm.push_back("LOAD " + std::to_string(first.value));
-            vm.push_back("SUB " + std::to_string(second.value));
-            return;
-        }
+                case VARIABLE:{// t(a) - b
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("SUB " + std::to_string(second.variableIndex));
+                }break;
 
-    }else{
-        if(second.value == mc->getValueOfIndex(0)){//TODO: what if AC is overflown
-            auto id = mc->declareValue(second.value);
-            vm.push_back("STORE " + std::to_string(id));
-            defineValue(first.value);
-            vm.push_back("SUB " + std::to_string(id));
-            return;   
+                case ARRAYVAR:{// t(a) - t(b)
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    auto id = mc->declareSpecial(".ArrayHold");
+                    vm.push_back("STORE " + std::to_string(id));
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("SUB " + std::to_string(id));
+                }break;
+            }
         }
-        else{
-            auto id = mc->declareValue(second.value);
-            defineValue(second.value);
-            vm.push_back("STORE " + std::to_string(id));
-            //mc->declareValue(second.value); TODO: we actully might want to declare space for it
-            defineValue(first.value);
-            vm.push_back("SUB " + std::to_string(id));
-            return;
-        }
-
+        break;
     }
-    */
 }
 
 /* CONDITION BLOCK*/
@@ -183,7 +228,7 @@ void Coder::processNEQ(){
 void Coder::processLE(){
     subVars();//after this value is in AC
     auto before = vm.size();
-    vm.push_back("JEG " + std::to_string(before+2));
+    vm.push_back("JNEG " + std::to_string(before+2));
     vm.push_back("JUMP ");
     jumps.push(vm.size()-1);//we say that this needs to be updated later
 }
@@ -233,28 +278,46 @@ void Coder::getValue(){
         }break;
 
         case ARRAYVAR:{
-            loadArrayWithVariable(item.arrayStartIndex,item.variableIndex);
+            loadArrayVar(item.arrayStartIndex,item.variableIndex);
         }break;
     }
       
 }
 
-/*
-void Coder::accessArrayWithVariable(string variable){
-    auto addressBegin = mc->getIndexOfArrayElement(arrayLocal,0);
-    auto arrayIndex = mc->declareValue(addressBegin);
-    defineValue(addressBegin);
-    vm.push_back("STORE " + std::to_string(arrayIndex));
-    auto varIndex = mc->getIndexOfVar(variable);
-    vm.push_back("LOAD " + std::to_string(varIndex));
-}*/
+/**
+    Verifies last stacked item if it's value is defined
+*/
+void Coder::verifyStack(){
+    auto val = args.top();
+    args.pop();
+    switch(val.type){
+        case CONSTVALUE:{
 
+        }break;
 
-/*
-long long Coder::loadIdentifier(long long pid){
-    vm.push_back("LOAD " + std::to_string(pid));
-    return mc->getValueOfIndex(pid);
-}*/
+        case VARIABLE:{
+            if(mc->isUndef(val.variableIndex)){
+                throw std::runtime_error("Undefined variable: " + val.name);
+            }
+
+        }break;
+
+        case ARRAYVAR:{
+            auto pos = val.name.find("-");
+            if(mc->isUndef(val.variableIndex)){
+                throw std::runtime_error("Undefined variable: " + val.name.substr(pos,val.name.size()));
+            }
+            //TODO: array is strange case here
+            //if(mc->isUndef(val.arrayStartIndex)){ 
+            //    throw std::runtime_error("Undefined variable: " + val.name.substr(0,pos));
+            //}
+        }break;
+    }
+    
+    args.push(val);
+    
+}
+
 
 void Coder::stackValue(long long value){
     args.push(SmartBlock(IDENTIFIER::CONSTVALUE,value));
@@ -262,18 +325,18 @@ void Coder::stackValue(long long value){
 
 void Coder::stackVariable(string var){
     auto index = mc->getIndexOfVar(var);
-    args.push(SmartBlock(IDENTIFIER::VARIABLE,0,index));//TODO: value
+    args.push(SmartBlock(IDENTIFIER::VARIABLE,0,index,0,var));//TODO: value
 }
 
 void Coder::stackArrayWithConst(long long value, string array){
     auto index = mc->getIndexOfArrayElement(array, value);
-    args.push(SmartBlock(IDENTIFIER::VARIABLE,0,index));//TODO: value
+    args.push(SmartBlock(IDENTIFIER::VARIABLE,0,index,0,array));//TODO: value
 }
 
 void Coder::stackArrayWithVariable(string var, string array){
     auto indexVar = mc->getIndexOfVar(var);
     auto indexArray = mc->getArray(array).getFirstOffsetedIndex();
-    args.push(SmartBlock(IDENTIFIER::ARRAYVAR,0,indexVar,indexArray));//TODO: value
+    args.push(SmartBlock(IDENTIFIER::ARRAYVAR,0,indexVar,indexArray,array+"-"+var));//TODO: value
 }
 
 
@@ -291,9 +354,14 @@ void Coder::assignValueToVar(long long injectPoint){//value is in AC
             std::vector<string> injectString;
             auto arrayIndex = block.arrayStartIndex;
             auto varIndex = block.variableIndex;
+
+            auto pos = block.name.find("-");
+            if(mc->isUndef(varIndex)){
+                throw std::runtime_error("Undefined variable: " + block.name.substr(pos+1,block.name.size()));
+            }
             defineValue(injectString, arrayIndex);
             injectString.push_back("ADD " + std::to_string(varIndex));
-            auto indexToStore = mc->getIndexOfSpecial(mc->special);
+            auto indexToStore = mc->getIndexOfSpecial(mc->forward);
             mc->setValueIn(indexToStore,0);
             mc->clearFlagsInArray(arrayIndex);
             injectString.push_back("STORE " + std::to_string(indexToStore));//STORE into special
@@ -384,15 +452,14 @@ void Coder::handleToFor(string iterator){
     auto second = args.top();
     args.pop();
     auto first = args.top(); args.pop();
-
     switch(first.type){
         case CONSTVALUE:{
             switch(second.type){
-                case CONSTVALUE:{// 1 + 1
+                case CONSTVALUE:{// 1 TO 1
                     if(first.value > second.value){
                         throw std::runtime_error("In FOR TO: Left variable can't be bigger than right");
                     }
-                    auto iteratorIndex = mc->pushIterator(iterator);
+                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
                     auto endValueIndex = mc->declareValue(second.value);
                     defineValue(second.value);
                     vm.push_back("STORE " + std::to_string(endValueIndex));
@@ -406,12 +473,30 @@ void Coder::handleToFor(string iterator){
                 }
                 break;
 
-                case VARIABLE:{// 1 + a
-
+                case VARIABLE:{// 1 TO a
+                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
+                    auto endValueIndex = second.variableIndex;
+                    defineValue(first.value);
+                    vm.push_back("STORE " +std::to_string(iteratorIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
                 }
                 break;
 
-                case ARRAYVAR:{// 1 + t(a)
+                case ARRAYVAR:{// 1 TO t(a)
+                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto endValueIndex = forLoopBlock.getSpecialIndex();
+                    
+                    defineValue(first.value);
+                    vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    vm.push_back("STORE " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
                 }
                 break;
             }
@@ -420,11 +505,45 @@ void Coder::handleToFor(string iterator){
 
         case VARIABLE:{
             switch(second.type){
-                case CONSTVALUE:// a + 1
-                    break;
-                case VARIABLE:// a + b
-                    break;
-                case ARRAYVAR:// a + t(a)
+                case CONSTVALUE:{// a TO 1
+                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
+                    auto endIndex = mc->declareValue(second.value);
+                    defineValue(second.value);
+                    vm.push_back("STORE " +std::to_string(endIndex));//store end of for
+                    vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
+                    vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
+                }break;
+
+                case VARIABLE:{// a TO b
+                    auto forBlock = mc->pushIterator(iterator,true);
+                    auto iteratorIndex = forBlock.getIteratorIndex();
+                    auto endIndex = forBlock.getSpecialIndex();
+                    vm.push_back("LOAD " +std::to_string(second.variableIndex));//load variable
+                    vm.push_back("STORE " +std::to_string(endIndex));//store to end value
+                    vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
+                    vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
+                }break;
+
+                case ARRAYVAR:// a TO t(b)
+                    auto forBlock = mc->pushIterator(iterator,true);
+                    auto iteratorIndex = forBlock.getIteratorIndex();
+                    auto endIndex = forBlock.getSpecialIndex();
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);//loads arrayvar value 
+                    vm.push_back("STORE " +std::to_string(endIndex));//store to end value
+                    vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
+                    vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
                     break;
             }
         }
@@ -432,11 +551,49 @@ void Coder::handleToFor(string iterator){
 
         case ARRAYVAR:{
             switch(second.type){
-                case CONSTVALUE:// t(a) + 1
-                    break;
-                case VARIABLE:// t(a) + b
-                    break;
-                case ARRAYVAR:// t(a) + t(b)
+                case CONSTVALUE:{// t(a) TO 1
+                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto endValueIndex = forLoopBlock.getSpecialIndex();
+                    auto iteratorIndex = forLoopBlock.getIteratorIndex();
+                    
+                    defineValue(second.value);
+                    vm.push_back("STORE " +std::to_string(endValueIndex));
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("STORE " + std::to_string(iteratorIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
+                }break;
+
+                case VARIABLE:{// t(a) TO b
+                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto endValueIndex = forLoopBlock.getSpecialIndex();
+                    auto iteratorIndex = forLoopBlock.getIteratorIndex();
+                    
+                    vm.push_back("LOAD " +std::to_string(second.variableIndex));
+                    vm.push_back("STORE " +std::to_string(endValueIndex));
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("STORE " + std::to_string(iteratorIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
+                }break;
+                case ARRAYVAR:// t(a) TO t(b)
+                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto endValueIndex = forLoopBlock.getSpecialIndex();
+                    auto iteratorIndex = forLoopBlock.getIteratorIndex();
+                    
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    //vm.push_back("LOAD " +std::to_string(second.variableIndex));
+                    vm.push_back("STORE " +std::to_string(endValueIndex));
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("STORE " + std::to_string(iteratorIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
                     break;
             }
         }
@@ -446,21 +603,20 @@ void Coder::handleToFor(string iterator){
 }
 
 void Coder::handleDownToFor(string iterator){
- if(args.size() != 2){
+   if(args.size() != 2){
         throw std::runtime_error("Args stack should be of size 2!");   
     }
     auto second = args.top();
     args.pop();
     auto first = args.top(); args.pop();
-
     switch(first.type){
         case CONSTVALUE:{
             switch(second.type){
-                case CONSTVALUE:{// 1 + 1
+                case CONSTVALUE:{// 1 TO 1
                     if(first.value < second.value){
-                        throw std::runtime_error("In FOR TO: Right variable can't be bigger than left");
+                        throw std::runtime_error("In FOR DOWNTO: right variable can't be bigger than left");
                     }
-                    auto iteratorIndex = mc->pushIterator(iterator);
+                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
                     auto endValueIndex = mc->declareValue(second.value);
                     defineValue(second.value);
                     vm.push_back("STORE " + std::to_string(endValueIndex));
@@ -474,12 +630,30 @@ void Coder::handleDownToFor(string iterator){
                 }
                 break;
 
-                case VARIABLE:{// 1 + a
-
+                case VARIABLE:{// 1 TO a
+                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
+                    auto endValueIndex = second.variableIndex;
+                    defineValue(first.value);
+                    vm.push_back("STORE " +std::to_string(iteratorIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JNEG ");    //TODO: STACK FOR JUMP INDEXER  
                 }
                 break;
 
-                case ARRAYVAR:{// 1 + t(a)
+                case ARRAYVAR:{// 1 TO t(a)
+                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto endValueIndex = forLoopBlock.getSpecialIndex();
+                    
+                    defineValue(first.value);
+                    vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    vm.push_back("STORE " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JNEG ");    //TODO: STACK FOR JUMP INDEXER  
                 }
                 break;
             }
@@ -488,11 +662,45 @@ void Coder::handleDownToFor(string iterator){
 
         case VARIABLE:{
             switch(second.type){
-                case CONSTVALUE:// a + 1
-                    break;
-                case VARIABLE:// a + b
-                    break;
-                case ARRAYVAR:// a + t(a)
+                case CONSTVALUE:{// a TO 1
+                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
+                    auto endIndex = mc->declareValue(second.value);
+                    defineValue(second.value);
+                    vm.push_back("STORE " +std::to_string(endIndex));//store end of for
+                    vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
+                    vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JNEG ");    //TODO: STACK FOR JUMP INDEXER  
+                }break;
+
+                case VARIABLE:{// a TO b
+                    auto forBlock = mc->pushIterator(iterator,true);
+                    auto iteratorIndex = forBlock.getIteratorIndex();
+                    auto endIndex = forBlock.getSpecialIndex();
+                    vm.push_back("LOAD " +std::to_string(second.variableIndex));//load variable
+                    vm.push_back("STORE " +std::to_string(endIndex));//store to end value
+                    vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
+                    vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JNEG ");    //TODO: STACK FOR JUMP INDEXER  
+                }break;
+
+                case ARRAYVAR:// a TO t(b)
+                    auto forBlock = mc->pushIterator(iterator,true);
+                    auto iteratorIndex = forBlock.getIteratorIndex();
+                    auto endIndex = forBlock.getSpecialIndex();
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);//loads arrayvar value 
+                    vm.push_back("STORE " +std::to_string(endIndex));//store to end value
+                    vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
+                    vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JNEG ");    //TODO: STACK FOR JUMP INDEXER  
                     break;
             }
         }
@@ -500,16 +708,55 @@ void Coder::handleDownToFor(string iterator){
 
         case ARRAYVAR:{
             switch(second.type){
-                case CONSTVALUE:// t(a) + 1
-                    break;
-                case VARIABLE:// t(a) + b
-                    break;
-                case ARRAYVAR:// t(a) + t(b)
+                case CONSTVALUE:{// t(a) TO 1
+                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto endValueIndex = forLoopBlock.getSpecialIndex();
+                    auto iteratorIndex = forLoopBlock.getIteratorIndex();
+                    
+                    defineValue(second.value);
+                    vm.push_back("STORE " +std::to_string(endValueIndex));
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("STORE " + std::to_string(iteratorIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JNEG ");    //TODO: STACK FOR JUMP INDEXER  
+                }break;
+
+                case VARIABLE:{// t(a) TO b
+                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto endValueIndex = forLoopBlock.getSpecialIndex();
+                    auto iteratorIndex = forLoopBlock.getIteratorIndex();
+                    
+                    vm.push_back("LOAD " +std::to_string(second.variableIndex));
+                    vm.push_back("STORE " +std::to_string(endValueIndex));
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("STORE " + std::to_string(iteratorIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JNEG ");    //TODO: STACK FOR JUMP INDEXER  
+                }break;
+                case ARRAYVAR:// t(a) TO t(b)
+                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto endValueIndex = forLoopBlock.getSpecialIndex();
+                    auto iteratorIndex = forLoopBlock.getIteratorIndex();
+                    
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);
+                    //vm.push_back("LOAD " +std::to_string(second.variableIndex));
+                    vm.push_back("STORE " +std::to_string(endValueIndex));
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);
+                    vm.push_back("STORE " + std::to_string(iteratorIndex));
+                    jumps.push(vm.size());//BEFORE COMPARISON
+                    vm.push_back("SUB " + std::to_string(endValueIndex));
+                    jumps.push(vm.size());//WHERE TO END?
+                    vm.push_back("JNEG ");    //TODO: STACK FOR JUMP INDEXER  
                     break;
             }
         }
         break;
     }
+
 }
 
 void Coder::endFor(bool dec){
@@ -544,8 +791,8 @@ void Coder::read(){
         }break;
 
         case ARRAYVAR:{
-            loadArrayWithVariable(item.arrayStartIndex, item.variableIndex);
-            auto indexToStore = mc->getIndexOfSpecial(mc->special);
+            loadArrayVar(item.arrayStartIndex, item.variableIndex);
+            auto indexToStore = mc->getIndexOfSpecial(mc->forward);
             mc->clearFlagsInArray(item.arrayStartIndex);
             vm.push_back("STORE " + std::to_string(indexToStore));
             vm.push_back("GET");
@@ -570,7 +817,7 @@ void Coder::write(){
         }break;
 
         case ARRAYVAR:{
-            loadArrayWithVariable(item.arrayStartIndex,item.variableIndex);
+            loadArrayVar(item.arrayStartIndex,item.variableIndex);
         }break;
     }
     vm.push_back("PUT");
@@ -596,7 +843,7 @@ long long Coder::getCurrentPosition(){
 }
 
 //Load value of array at variable
-void Coder::loadArrayWithVariable(long long arrayIndex, long long varIndex){
+void Coder::loadArrayVar(long long arrayIndex, long long varIndex){
     defineValue(arrayIndex);
     vm.push_back("ADD " + std::to_string(varIndex));
     vm.push_back("LOADI " + std::to_string(0));
