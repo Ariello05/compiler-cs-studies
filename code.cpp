@@ -7,8 +7,12 @@ Coder::Coder(std::shared_ptr<MemoryController> mc){
     auto a = mc->declareValue(1);
     auto b = mc->declareValue(2);
     auto c = mc->declareValue(3);
+    auto d = mc->declareValue(-1);
     mc->declareSpecial(mc->forward);
     vm.push_back("SUB 0");
+    vm.push_back("DEC");
+    vm.push_back("STORE " + std::to_string(d));
+    vm.push_back("INC");
     vm.push_back("INC");
     vm.push_back("STORE " + std::to_string(a));
     vm.push_back("INC");
@@ -104,9 +108,9 @@ void Coder::addVars(){
                     vm.push_back("ADD " + std::to_string(second.variableIndex));
                 }break;
 
-                case ARRAYVAR:{// t(a) + t(b)
+                case ARRAYVAR:{// t(a) + t(b) TODO: check same index
                     loadArrayVar(first.arrayStartIndex,first.variableIndex);
-                    auto id = mc->smartGetSpecialIndex(mc->local);
+                    auto id = mc->smartGetSpecialIndex(mc->primary);
                     vm.push_back("STORE " + std::to_string(id));
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);
                     vm.push_back("ADD " + std::to_string(id));
@@ -128,6 +132,10 @@ void Coder::subVars(){
         case CONSTVALUE:{
             switch(second.type){
                 case CONSTVALUE:{// 1 - 1
+                    if(first.value == second.value){
+                        vm.push_back("SUB 0");
+                        return;
+                    }
                     auto id = mc->declareValue(first.value);
                     defineValue(first.value);
                     vm.push_back("STORE " + std::to_string(id));
@@ -145,7 +153,7 @@ void Coder::subVars(){
 
                 case ARRAYVAR:{// 1 - t(a)
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);
-                    auto id = mc->smartGetSpecialIndex(mc->local);
+                    auto id = mc->smartGetSpecialIndex(mc->primary);
                     vm.push_back("STORE " + std::to_string(id));
                     defineValue(first.value);
                     vm.push_back("SUB " + std::to_string(id));
@@ -172,7 +180,7 @@ void Coder::subVars(){
 
                 case ARRAYVAR:{// a - t(a)
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);
-                    auto id = mc->smartGetSpecialIndex(mc->local);
+                    auto id = mc->smartGetSpecialIndex(mc->primary);
                     vm.push_back("STORE " + std::to_string(id));
                     vm.push_back("LOAD " + std::to_string(first.variableIndex));
                     vm.push_back("SUB " + std::to_string(id));
@@ -196,7 +204,7 @@ void Coder::subVars(){
                     vm.push_back("SUB " + std::to_string(second.variableIndex));
                 }break;
 
-                case ARRAYVAR:{// t(a) - t(b)
+                case ARRAYVAR:{// t(a) - t(b) TODO: same index check
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);
                     auto id = mc->declareSpecial(".ArrayHold");
                     vm.push_back("STORE " + std::to_string(id));
@@ -207,6 +215,337 @@ void Coder::subVars(){
         }
         break;
     }
+}
+
+void Coder::mulVars(){
+    if(args.size() > 2){
+        std::runtime_error("Stack shouldn't have more than 1 value here");
+    }
+    auto second = args.top(); args.pop();//right
+    auto first = args.top(); args.pop();//left
+
+    long long one;
+    long long two;
+    auto third = mc->smartGetSpecialIndex(".AddStack");//ADDING STACK
+    vm.push_back("SUB 0");
+    vm.push_back("STORE " + std::to_string(third));
+
+//TODO: Serch variables for samealike const values?
+    switch(first.type){
+        case CONSTVALUE:{
+            switch(second.type){
+                case CONSTVALUE:{// 1 * 1
+                    two = mc->declareValue(second.value);
+                    defineValue(two);
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->declareValue(first.value);
+                    if(first.value != second.value)
+                        defineValue(one);
+                    vm.push_back("STORE " + std::to_string(one));//left const in AC
+                    
+                }
+                break;
+
+                case VARIABLE:{// 1 * a
+                    two = mc->smartGetSpecialIndex(mc->primary);
+                    vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->declareValue(first.value);
+                    defineValue(one);
+                    vm.push_back("STORE " + std::to_string(one));//const in AC
+                }
+                break;
+
+                case ARRAYVAR:{// 1 * t(a)
+                    two = mc->smartGetSpecialIndex(mc->primary);
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->declareValue(first.value);
+                    defineValue(one);
+                    vm.push_back("STORE " + std::to_string(one));//const in AC
+
+                }
+                break;
+            }
+        }
+        break;
+
+        case VARIABLE:{
+            switch(second.type){
+                case CONSTVALUE:{// a * 1
+                    two = mc->declareValue(second.value);
+                    defineValue(two);
+                    vm.push_back("STORE " + std::to_string(two));
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(one)); // a in AC
+                }break;
+
+                case VARIABLE:{// a * b
+                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    if(first.variableIndex != second.variableIndex)
+                        vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(one)); // a in AC
+
+                }break;
+
+                case ARRAYVAR:{// a * t(b)
+                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
+                    //mc->push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(one)); // a in AC
+                }break;
+            }
+        }
+        break;
+
+        case ARRAYVAR:{
+            switch(second.type){
+                case CONSTVALUE:{// t(a) * 1
+                    //if(second.value == 2){
+                    //    vm.pop_back();vm.pop_back();
+                    //
+                    //}
+                    two = mc->declareValue(second.value);
+                    defineValue(two);
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
+                }break;
+
+                case VARIABLE:{// t(a) * b
+                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
+                }break;
+
+                case ARRAYVAR:{// t(a) * t(b) //TODO: same index
+                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(two)); // t(a) in AC
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
+                }break;
+            }
+        }
+        break; 
+    }    
+    
+    //one - left, two - right, one in AC
+    auto div = mc->getIndexOfValue(-1,MTYPE::CONST);
+    auto mul = mc->getIndexOfValue(1,MTYPE::CONST);
+
+    vm.push_back("JZERO ");
+    auto endJump = vm.size()-1;
+    vm.push_back("JPOS " + std::to_string(vm.size()+7));
+    vm.push_back("SUB 0");
+    vm.push_back("SUB " + std::to_string(two));
+    vm.push_back("STORE " + std::to_string(two));
+    vm.push_back("SUB 0");
+    vm.push_back("SUB " + std::to_string(one));
+    vm.push_back("STORE " + std::to_string(one));
+    vm.push_back("DEC");
+    auto checkLoop = vm.size();
+
+    vm.push_back("JZERO ");//jump to end if a == 1
+    vm.push_back("INC");
+    vm.push_back("SHIFT " + std::to_string(div));
+    vm.push_back("ADD " + std::to_string(0));
+    vm.push_back("SUB " + std::to_string(one));
+    auto cur = vm.size();
+    vm.push_back("JZERO ");//jump to X if even
+    //ODDCASE
+    
+    vm.push_back("LOAD " + std::to_string(third));
+    vm.push_back("ADD " + std::to_string(two));
+    vm.push_back("STORE " + std::to_string(third));
+
+    vm.push_back("LOAD " + std::to_string(two));
+    vm.push_back("SHIFT " + std::to_string(mul));
+    vm.push_back("STORE " + std::to_string(two));
+
+    vm.push_back("LOAD " + std::to_string(one));
+    vm.push_back("DEC");
+    vm.push_back("SHIFT " + std::to_string(div));
+    vm.push_back("STORE " + std::to_string(one));
+    vm.push_back("JUMP " + std::to_string(checkLoop-1));
+    //EVENCASE
+    auto even = vm.size();
+    vm[cur] += std::to_string(even);//JUMP TO EVENCASE 
+    vm.push_back("LOAD " + std::to_string(two));
+    vm.push_back("SHIFT " + std::to_string(mul));
+    vm.push_back("STORE " + std::to_string(two));
+
+    vm.push_back("LOAD " + std::to_string(one));
+    vm.push_back("SHIFT " + std::to_string(div));
+    vm.push_back("STORE " + std::to_string(one));
+    vm.push_back("JUMP " + std::to_string(checkLoop-1));
+
+    vm[checkLoop] += std::to_string(vm.size());
+    vm.push_back("LOAD " + std::to_string(two));
+    vm.push_back("ADD " + std::to_string(third));
+    vm[endJump] += std::to_string(vm.size());
+}
+
+void Coder::divVars(){
+    if(args.size() > 2){
+        std::runtime_error("Stack shouldn't have more than 1 value here");
+    }
+    auto second = args.top(); args.pop();//right
+    auto first = args.top(); args.pop();//left
+
+    long long one;
+    long long two;
+    auto third = mc->smartGetSpecialIndex(".AddStack");//ADDING STACK
+    vm.push_back("SUB 0");
+    vm.push_back("STORE " + std::to_string(third));
+
+//TODO: Serch variables for samealike const values?
+    switch(first.type){
+        case CONSTVALUE:{
+            switch(second.type){
+                case CONSTVALUE:{// 1 * 1
+                    two = mc->declareValue(second.value);
+                    defineValue(two);
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->declareValue(first.value);
+                    if(first.value != second.value)
+                        defineValue(one);
+                    vm.push_back("STORE " + std::to_string(one));//left const in AC
+                    
+                }
+                break;
+
+                case VARIABLE:{// 1 * a
+                    two = mc->smartGetSpecialIndex(mc->primary);
+                    vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->declareValue(first.value);
+                    defineValue(one);
+                    vm.push_back("STORE " + std::to_string(one));//const in AC
+                }
+                break;
+
+                case ARRAYVAR:{// 1 * t(a)
+                    two = mc->smartGetSpecialIndex(mc->primary);
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->declareValue(first.value);
+                    defineValue(one);
+                    vm.push_back("STORE " + std::to_string(one));//const in AC
+
+                }
+                break;
+            }
+        }
+        break;
+
+        case VARIABLE:{
+            switch(second.type){
+                case CONSTVALUE:{// a / 2
+                    if(second.value == 2){
+                        vm.pop_back();vm.pop_back();
+                        vm.push_back("LOAD " + std::to_string(first.variableIndex));
+                        vm.push_back("SHIFT " + std::to_string(mc->getIndexOfValue(-1)));
+                        return;
+                    }
+                    two = mc->declareValue(second.value);
+                    defineValue(two);
+                    vm.push_back("STORE " + std::to_string(two));
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(one)); // a in AC
+                }break;
+
+                case VARIABLE:{// a * b
+                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    if(first.variableIndex != second.variableIndex)
+                        vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(one)); // a in AC
+
+                }break;
+
+                case ARRAYVAR:{// a * t(b)
+                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
+                    //mc->push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(one)); // a in AC
+                }break;
+            }
+        }
+        break;
+
+        case ARRAYVAR:{
+            switch(second.type){
+                case CONSTVALUE:{// t(a) * 1
+                    //if(second.value == 2){
+                    //    vm.pop_back();vm.pop_back();
+                    //
+                    //}
+                    two = mc->declareValue(second.value);
+                    defineValue(two);
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
+                }break;
+
+                case VARIABLE:{// t(a) * b
+                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    vm.push_back("STORE " + std::to_string(two)); 
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
+                }break;
+
+                case ARRAYVAR:{// t(a) * t(b) //TODO: same index
+                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(two)); // t(a) in AC
+
+                    one = mc->smartGetSpecialIndex(mc->primary);
+                    loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
+                    vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
+                }break;
+            }
+        }
+        break; 
+    }        
 }
 
 /* CONDITION BLOCK*/
@@ -268,7 +607,7 @@ void Coder::getValue(){
 
     switch(item.type){
         case CONSTVALUE:{
-            defineValue(item.value);
+            defineValue(item.value);//TODO: OPTIMIZE LOOPS
         }break;
 
         case VARIABLE:{
@@ -281,7 +620,6 @@ void Coder::getValue(){
             loadArrayVar(item.arrayStartIndex,item.variableIndex);
         }break;
     }
-      
 }
 
 /**
@@ -681,7 +1019,8 @@ void Coder::handleDownToFor(string iterator){
                     auto endIndex = forBlock.getSpecialIndex();
                     vm.push_back("LOAD " +std::to_string(second.variableIndex));//load variable
                     vm.push_back("STORE " +std::to_string(endIndex));//store to end value
-                    vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
+                    if(first.variableIndex != second.variableIndex)
+                        vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
                     vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
                     jumps.push(vm.size());//BEFORE COMPARISON
                     vm.push_back("SUB " + std::to_string(endIndex));
@@ -813,7 +1152,8 @@ void Coder::write(){
         }break;
 
         case VARIABLE:{
-            vm.push_back("LOAD " + std::to_string(item.variableIndex));
+            if(vm.back() != "STORE " + std::to_string(item.variableIndex))
+                vm.push_back("LOAD " + std::to_string(item.variableIndex));
         }break;
 
         case ARRAYVAR:{
@@ -850,10 +1190,24 @@ void Coder::loadArrayVar(long long arrayIndex, long long varIndex){
 }
 
 void Coder::defineValue(long long value){
-    mc->setValueIn(0,value);
     auto one = mc->getIndexOfValue(1,CONST);
     auto two = mc->getIndexOfValue(2,CONST);
     auto three = mc->getIndexOfValue(3,CONST);
+
+    if(value == 0){
+        vm.push_back("SUB 0");
+        mc->setValueIn(0,value);
+        mc->freeRestrict();
+        return;
+    }
+    auto exists = mc->getIndexOfValue(value);
+    if(exists != -1 ){
+        
+        vm.push_back("LOAD " + std::to_string(exists));
+        mc->setValueIn(0,value);
+        mc->freeRestrict();
+        return;
+    }
 
     bool negative = 0;
     if(value < 0){
@@ -870,6 +1224,8 @@ void Coder::defineValue(long long value){
         --i;
     }
     if(i == -1){
+        mc->setValueIn(0,0);
+        mc->freeRestrict();
         return; // AC HAS 0
     }
 
@@ -909,13 +1265,28 @@ void Coder::defineValue(long long value){
         else if(i == 0){
         }
     }    
+    mc->setValueIn(0,value);
+    mc->freeRestrict();
 }
 
 void Coder::defineValue(std::vector<string> & storeCode, long long value){
-    mc->setValueIn(0,0);
     auto one = mc->getIndexOfValue(1,CONST);
     auto two = mc->getIndexOfValue(2,CONST);
     auto three = mc->getIndexOfValue(3,CONST);
+
+    if(value == 0){
+        vm.push_back("SUB 0");
+        mc->setValueIn(0,value);
+        mc->freeRestrict();
+        return;
+    }
+    auto exists = mc->getIndexOfValue(value);
+    if(exists != -1 ){
+        vm.push_back("LOAD " + std::to_string(exists));
+        mc->setValueIn(0,value);
+        mc->freeRestrict();
+        return;
+    }
 
     bool negative = 0;
     if(value < 0){
@@ -932,6 +1303,8 @@ void Coder::defineValue(std::vector<string> & storeCode, long long value){
         --i;
     }
     if(i == -1){
+        mc->setValueIn(0,0);
+        mc->freeRestrict();
         return; // AC HAS 0
     }
 
@@ -971,4 +1344,6 @@ void Coder::defineValue(std::vector<string> & storeCode, long long value){
         else if(i == 0){
         }
     }    
+    mc->setValueIn(0,value);
+    mc->freeRestrict();
 }

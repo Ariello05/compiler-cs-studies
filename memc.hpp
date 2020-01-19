@@ -133,7 +133,10 @@ public:
     void printAll();
 
     const string forward = ".AssignForward";
-    const string local = ".LocalArray";
+    const string primary = ".Local1";
+    const string secondary = ".Local2";
+
+    void freeRestrict();
 
 private:
     //Most of the work is done in blocks which holds pairs index in memory - memblocks(VALUE)
@@ -144,4 +147,5 @@ private:
     std::map<string, long long> specials;
     std::vector<ForLoopBlock> iterators;//TODO: what if eg. for i .. endfor ... for i .. endfor
     long long indexer;
+    long long restr = 0;
 };

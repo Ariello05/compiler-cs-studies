@@ -66,6 +66,8 @@ public:
     void addVars();//USES STACK
     void subVars();//USES STACK
     void getValue();//USES STACK
+    void mulVars();
+    void divVars();
 
     /* CONDITION BLOCK*/
     void processEQ();
@@ -119,6 +121,8 @@ private:
     void loadArrayVar(long long arrayIndex, long long varIndex);//Load value of array at variable
     void defineValue(long long value);
     void defineValue(std::vector<string> & storeCode, long long value);
+
+
 
     std::vector<string> vm;
     std::shared_ptr<MemoryController> mc;

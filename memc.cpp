@@ -65,6 +65,7 @@ long long MemoryController::declareValue(long long value){
     }
     */
     blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(value, MTYPE::CONST))));//WE HOLD VARIABLE AT SOME INDEX
+    restr = indexer;
     ++indexer;
     return indexer-1;
 }
@@ -220,6 +221,15 @@ long long MemoryController::getIndexOfValue(long long value){
         try{
             if(beg->second->getValue() == value)
             {
+                if(beg->second->getValue() == 0){
+                    ++beg;
+                    continue;
+                }
+
+                if(beg->first == restr){
+                    ++beg;
+                    continue;
+                }
                 return beg->first;
             }
         }
@@ -245,6 +255,10 @@ long long MemoryController::getIndexOfValue(long long value, MTYPE type){
 
             if(beg->second->getValue() == value)
             {
+                if(beg->first == restr){
+                    ++beg;
+                    continue;
+                }
                 return beg->first;
             }
         }
@@ -405,6 +419,10 @@ void MemoryController::printUndefined(){
     std::vector<string> vars;
     while(beg != end){
         if(!beg->second->isDefined()){
+            if(beg->second->getType() == SPECIAL){
+                ++beg;
+                continue;
+            }
             vars.push_back(beg->second->getName());
         }
         ++beg;
@@ -419,4 +437,8 @@ void MemoryController::printUndefined(){
         }
 
     }
+}
+
+void MemoryController::freeRestrict(){
+    restr = 0;
 }
