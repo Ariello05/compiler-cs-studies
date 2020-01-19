@@ -1368,7 +1368,7 @@ yyreduce:
 #line 60 "parser.ypp"
     {
                    code->end(); vars->printUndefined(); code->printVM(); 
-                   vars->printAll();
+                   //vars->printAll();
                    std::cerr << "\033[1;32m[SUCCESS]\033[0m " << std::endl;
                    }
 #line 1375 "parser_y.c"

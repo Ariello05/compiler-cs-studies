@@ -75,7 +75,7 @@ class MemBlock{
 
 class ForLoopBlock{
     public:
-    ForLoopBlock(string iterator, long long iteratorIndex, long long special = 0){
+    ForLoopBlock(string iterator, unsigned long long iteratorIndex, unsigned long long special = 0){
         this->iterator = iterator;
         this->specialIndex = special;
         this->iteratorIndex = iteratorIndex;
@@ -94,11 +94,11 @@ class ForLoopBlock{
         return iterator;
     }
 
-    long long getIteratorIndex(){
+    unsigned long long getIteratorIndex(){
         return iteratorIndex;
     }
 
-    long long getSpecialIndex(){
+    unsigned long long getSpecialIndex(){
         if(!isSpecial()){
             throw std::runtime_error("Can't access special value of non special ForLoopBlock");
         }
@@ -108,6 +108,6 @@ class ForLoopBlock{
     private:
     bool special;// 1 TO t(a) requires to hold 2 values, iterator and special to hold value of t(a)
     string iterator;
-    long long iteratorIndex;
-    long long specialIndex;
+    unsigned long long iteratorIndex;
+    unsigned long long specialIndex;
 };

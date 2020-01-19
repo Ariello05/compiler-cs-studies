@@ -1,7 +1,7 @@
 DECLARE
-    a, b
+    a
 BEGIN
-    b ASSIGN 17;
-    a ASSIGN b DIV 2;
+	a ASSIGN 1232 TIMES 4213;
     WRITE a;
 END
+

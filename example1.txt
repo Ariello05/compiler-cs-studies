@@ -1,13 +1,16 @@
-DECLARE 
-    a,b,t(2:120)
+DECLARE
+    j, k
 BEGIN
-
-    FOR i FROM 2 TO 10 DO
-        t(i) ASSIGN i;
+    READ k;
+    FOR i FROM 0 TO k DO
+        IF i GE 1 THEN
+            j ASSIGN j TIMES 2;
+        ENDIF
+        IF i EQ 1 THEN
+            j ASSIGN 1;
+        ENDIF
     ENDFOR
-
-    FOR i FROM 10 DOWNTO 2 DO
-        WRITE t(i);
-    ENDFOR
-
+    IF k GEQ 1 THEN
+        WRITE j;
+    ENDIF
 END

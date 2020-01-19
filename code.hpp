@@ -17,7 +17,7 @@ namespace machine{
 enum IDENTIFIER {ARRAYVAR,CONSTVALUE,VARIABLE};
 class SmartBlock{//Helper
     public:
-    SmartBlock(IDENTIFIER type, long long value=0 , long long varName =0, long long arrayName = 0, string name = ""){
+    SmartBlock(IDENTIFIER type, unsigned long long value=0 , unsigned long long varName =0, unsigned long long arrayName = 0, string name = ""){
         this->type = type;
         switch(type){
             case ARRAYVAR:
@@ -52,8 +52,8 @@ class SmartBlock{//Helper
         return *this;
     }
     IDENTIFIER type;
-    long long variableIndex;
-    long long arrayStartIndex;
+    unsigned long long variableIndex;
+    unsigned long long arrayStartIndex;
     long long value;
     string name;
 };
@@ -118,7 +118,9 @@ public:
 
 
 private:
-    void loadArrayVar(long long arrayIndex, long long varIndex);//Load value of array at variable
+    void loadArrayVar(unsigned long long arrayIndex, unsigned long long varIndex);//Load value of array at variable
+    void defineValueUnsinged(unsigned long long value);
+    void defineValueUnsinged(std::vector<string> & storeCode, long long value);
     void defineValue(long long value);
     void defineValue(std::vector<string> & storeCode, long long value);
 

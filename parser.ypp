@@ -59,7 +59,7 @@ program:        DECLARE declarations BEGINA { if(declareError){YYABORT;
                                          }}
                 commands END {
                    code->end(); vars->printUndefined(); code->printVM(); 
-                   vars->printAll();
+                   //vars->printAll();
                    std::cerr << "\033[1;32m[SUCCESS]\033[0m " << std::endl;
                    }                                                   
                 |

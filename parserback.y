@@ -16,7 +16,7 @@ int addr;
 %}
 %union sem_rec {
     std::string *pidentifier;
-    long long num;
+    unsigned long long num;
     struct for_label *lfor;
     struct cond_label *cond;
     struct label *lbl;

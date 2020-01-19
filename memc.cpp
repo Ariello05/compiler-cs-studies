@@ -7,7 +7,7 @@ MemoryController::MemoryController(){
 }
 
 // lets just don't call it
-long long MemoryController::declareVar(string name, long long value){
+unsigned long long MemoryController::declareVar(string name, long long value){
     if(variables.find(name) != variables.end()){
         
     }
@@ -15,9 +15,10 @@ long long MemoryController::declareVar(string name, long long value){
     variables.insert(std::make_pair(name,indexer));//WE HOLD NAME-INDEX PAIR
     ++indexer;
     return indexer-1;
+
 }
 
-long long MemoryController::declareVar(string name){
+unsigned long long MemoryController::declareVar(string name){
     if(variables.find(name) != variables.end()){
         throw std::runtime_error("Variable: " + name + " is already defined!");
     }
@@ -27,7 +28,7 @@ long long MemoryController::declareVar(string name){
     return indexer-1;
 }
 
-long long MemoryController::declareArray(string name, long long begin, long long end){
+unsigned long long MemoryController::declareArray(string name, long long begin, long long end){
     auto blockstart = indexer;
     if(begin > end){
         throw std::runtime_error("In array, end can't be less than begin");
@@ -35,18 +36,25 @@ long long MemoryController::declareArray(string name, long long begin, long long
     if(arrays.find(name) != arrays.end()){
         throw std::runtime_error("Array: " + name + " is already defined!");
     }
+    blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(begin) + ")"))));
+    auto array = Array(blockstart,begin,end);
+    arrays.insert(std::make_pair(name,array));
 
-    for(auto i = begin; i<=end; ++i){
-        blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(i) + ")"))));//WE HOLD VARIABLE AT SOME INDEX
+    indexer += array.getSize()-1;
+    blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(end) + ")"))));
+    /*
+    for(auto i = begin; i<=end; ++i){//TODO: better way to acomplish tihs
+        if(i == begin || i == end)
+            blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(i) + ")"))));//WE HOLD VARIABLE AT SOME INDEX
         ++indexer;
     }
     arrays.insert(std::make_pair(name,Array(blockstart,begin,end)));
-
+    */
     return blockstart;
 }
 
 
-long long MemoryController::declareValue(long long value){
+unsigned long long MemoryController::declareValue(long long value){
     /*
     auto beg = blocks.begin();
     const auto end = blocks.end();
@@ -70,7 +78,7 @@ long long MemoryController::declareValue(long long value){
     return indexer-1;
 }
 
-long long MemoryController::declareSpecial(string name){
+unsigned long long MemoryController::declareSpecial(string name){
     if(specials.find(name) != specials.end()){
         throw std::runtime_error("Declaring already existing special!");
     }
@@ -81,7 +89,7 @@ long long MemoryController::declareSpecial(string name){
 }
 
 
-long long MemoryController::smartGetSpecialIndex(string name){
+unsigned long long MemoryController::smartGetSpecialIndex(string name){
     if(specials.find(name) == specials.end()){
         return declareSpecial(name);
     }
@@ -90,7 +98,7 @@ long long MemoryController::smartGetSpecialIndex(string name){
     }
 }
 
-long long MemoryController::pushSimpleIterator(string name){
+unsigned long long MemoryController::pushSimpleIterator(string name){
     auto f = pushIterator(name,false);
     
     return f.getIteratorIndex();
@@ -126,7 +134,7 @@ ForLoopBlock MemoryController::pushIterator(string name, bool isSpecial){
 }
 
 //Returns index of iterator
-long long MemoryController::popIterator(){
+unsigned long long MemoryController::popIterator(){
     auto forblock = iterators.back();
     auto ob = variables.find(forblock.getName());
     if(ob == variables.end()){
@@ -155,16 +163,16 @@ void MemoryController::setValueIn(string name, long long value){
     block->setValue(value);
 }
 
-void MemoryController::setValueIn(long long index, long long value){
+void MemoryController::setValueIn(unsigned long long index, long long value){
     //std::cerr<<index<<'\t'<<value<<'\n';
-    auto block = blocks.find(index);
+    auto block = blocks.find(index);     
     if(block == blocks.end()){
         throw std::runtime_error("Can't access: " + std::to_string(index));
     }
     block->second->setValue(value);
 }
 
-void MemoryController::setValueIn(string name, long long index, long long value){
+void MemoryController::setValueIn(string name, unsigned long long index, long long value){
     auto arr = arrays.find(name);
     if(arr == arrays.end()){
         throw std::runtime_error("No array of such name: " + name);
@@ -181,7 +189,7 @@ std::shared_ptr<MemBlock> MemoryController::getBlock(string name){
     return blocks.find(res->second)->second;
 }
 
-std::shared_ptr<MemBlock> MemoryController::getBlock(long long index){
+std::shared_ptr<MemBlock> MemoryController::getBlock(unsigned long long index){
     auto block = blocks.find(index);
     if(block == blocks.end()){
         throw std::runtime_error("Can't access: " + index);
@@ -189,7 +197,7 @@ std::shared_ptr<MemBlock> MemoryController::getBlock(long long index){
     return block->second;
 }
 
-std::shared_ptr<MemBlock> MemoryController::getBlock(string name, long long index){
+std::shared_ptr<MemBlock> MemoryController::getBlock(string name, unsigned long long index){
     auto arr = arrays.find(name);
     return blocks.find(arr->second.getMemBlockIndex(index))->second;//inside throw
 }
@@ -201,19 +209,19 @@ long long MemoryController::getValueOfVar(string name){
     return block->getValue();
 }
 //Still usable
-long long MemoryController::getValueOfIndex(long long index){
+long long MemoryController::getValueOfIndex(unsigned long long index){
     auto block = blocks.find(index)->second;
     return block->getValue();
 }
 //Depracated for now
-long long MemoryController::getValueOfIndexInArray(string name, long long index){
+long long MemoryController::getValueOfIndexInArray(string name, unsigned long long index){
     auto res = arrays.find(name)->second;
     auto block = blocks.find(res.getMemBlockIndex(index))->second;
     return block->getValue();
 }
 
 //Depracated for now
-long long MemoryController::getIndexOfValue(long long value){
+unsigned long long MemoryController::getIndexOfValue(long long value){
 
     auto beg = blocks.begin();
     const auto end = blocks.end();
@@ -236,13 +244,13 @@ long long MemoryController::getIndexOfValue(long long value){
         catch(...){}
         ++beg;
     }
-    return -1;
-    //string err = "This value:" + std::to_string(value) + "\t is not allocated!";
-    //throw std::runtime_error(err);
+    //return -1;
+    string err = "This value:" + std::to_string(value) + "\t is not allocated!";
+    throw std::runtime_error(err);
 }
 
 //Still usable for MTYPE==CONST
-long long MemoryController::getIndexOfValue(long long value, MTYPE type){
+unsigned long long MemoryController::getIndexOfValue(long long value, MTYPE type){
 
     auto beg = blocks.begin();
     const auto end = blocks.end();
@@ -265,12 +273,12 @@ long long MemoryController::getIndexOfValue(long long value, MTYPE type){
         catch(...){}
         ++beg;
     }
-    return -1;
-    //string err = "This value:" + std::to_string(value) + "\t is not allocated!";
-    //throw std::runtime_error(err);
+         
+    string err = "This value:" + std::to_string(value) + "\t is not allocated!";
+    throw std::runtime_error(err);
 }
 
-long long MemoryController::getIndexOfVar(string name){
+unsigned long long MemoryController::getIndexOfVar(string name){
     auto var = variables.find(name);
     if(var == variables.end()){
         throw std::runtime_error("Accesing undeclared variable: " + name);
@@ -278,19 +286,21 @@ long long MemoryController::getIndexOfVar(string name){
     return var->second;
 }
 
-long long MemoryController::getIndexOfArrayElement(string name, long long element){
+unsigned long long MemoryController::getIndexOfArrayElement(string name, unsigned long long element){
     auto res = arrays.find(name);
     if(res == arrays.end()){
         throw std::runtime_error("Accesing undeclared array: " + name);
     }
-    return res->second.getMemBlockIndex(element);
+    auto index = res->second.getMemBlockIndex(element);
+    blocks.insert(std::make_pair(index,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(element) + ")"))));//WE HOLD VARIABLE AT SOME INDEX
+    return index;
 }
-long long MemoryController::getIndexOfSpecial(string name){
+unsigned long long MemoryController::getIndexOfSpecial(string name){
     auto res = specials.find(name)->second;
     return blocks.find(res)->first;
 }
 
-long long MemoryController::getIndexOfCurrentIterator(){
+unsigned long long MemoryController::getIndexOfCurrentIterator(){
     auto forblock = iterators.back();
     auto index = variables.find(forblock.getName());
     if(index == variables.end()){
@@ -299,7 +309,7 @@ long long MemoryController::getIndexOfCurrentIterator(){
     return index->second;
 }
 
-bool MemoryController::isUndef(long long id){
+bool MemoryController::isUndef(unsigned long long id){
     auto block = getBlock(id);
     if(block == nullptr){
         throw std::runtime_error("No memory allocated at this id:" +std::to_string(id) );
@@ -319,7 +329,7 @@ bool MemoryController::isIterator(string name){
     return false;
 }
 
-bool MemoryController::isIterator(long long index){
+bool MemoryController::isIterator(unsigned long long index){
     auto memblock = getBlock(index);
     if(memblock->getType() != MTYPE::ITERATOR){
         return false;
@@ -328,7 +338,7 @@ bool MemoryController::isIterator(long long index){
 }
 
 
-Array MemoryController::getArray(string name){
+Array & MemoryController::getArray(string name){
     auto res = arrays.find(name);
     if(res == arrays.end()){
         throw std::runtime_error("Accesing undeclared array: " + name);
@@ -336,15 +346,19 @@ Array MemoryController::getArray(string name){
     return res->second;
 }
 
-void MemoryController::clearFlagsInArray(long long start){
+void MemoryController::clearFlagsInArray(unsigned long long start){
     auto begin = arrays.begin();
     const auto end = arrays.end();
+    
     while(begin != end){
         auto arr = begin->second;
         if(arr.getFirstOffsetedIndex() == start){
+            if(arr.panic){
+                return;
+            }
             auto last = arr.getLastOffsetedIndex();
             for(auto i = start+arr.getBegin(); i <= last; ++i){//TODO: ?
-                setValueIn(i,0);
+                try{setValueIn(i,0);}catch(...){continue;}
             }
             return;
         }
@@ -358,19 +372,22 @@ void MemoryController::clearFlagsInArray(string name){
     if(item == arrays.end()){
         throw std::runtime_error("Can't access array");
     }
+    if(item->second.panic){
+        return;
+    }
     auto start = item->second.getFirstOffsetedIndex();
     auto last = item->second.getLastOffsetedIndex();
     for(auto i = start; i <= last; ++i){
-                setValueIn(i,0);
+        try{setValueIn(i,0);}catch(...){continue;}
     }
 }
 
-MTYPE MemoryController::getTypeOfIndex(long long index){
+MTYPE MemoryController::getTypeOfIndex(unsigned long long index){
     return blocks.find(index)->second->getType();
 }
 
 
-long long MemoryController::getFreeIndex(){
+unsigned long long MemoryController::getFreeIndex(){
     return indexer+1;
 }
 
