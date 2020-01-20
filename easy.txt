@@ -1,7 +1,0 @@
-DECLARE
-    a,b
-BEGIN
-    b ASSIGN -11;
-    a ASSIGN b MOD 2;
-    WRITE a;
-END
