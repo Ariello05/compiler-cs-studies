@@ -68,6 +68,7 @@ public:
     void getValue();//USES STACK
     void mulVars();
     void divVars();
+    void modVars();
 
     /* CONDITION BLOCK*/
     void processEQ();
@@ -118,6 +119,7 @@ public:
 
 
 private:
+    bool divSwitch(SmartBlock first, SmartBlock second, unsigned long long old_b, unsigned long long one, unsigned long long two);
     void loadArrayVar(unsigned long long arrayIndex, unsigned long long varIndex);//Load value of array at variable
     void defineValueUnsinged(unsigned long long value);
     void defineValueUnsinged(std::vector<string> & storeCode, long long value);

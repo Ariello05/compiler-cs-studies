@@ -1554,53 +1554,59 @@ yyreduce:
 #line 1555 "parser_y.c"
     break;
 
+  case 29:
+#line 162 "parser.ypp"
+    { (yyval.number) = code->getCurrentPosition(); code->modVars();  }
+#line 1561 "parser_y.c"
+    break;
+
   case 30:
 #line 165 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processEQ();   }
-#line 1561 "parser_y.c"
+#line 1567 "parser_y.c"
     break;
 
   case 31:
 #line 166 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processNEQ();  }
-#line 1567 "parser_y.c"
+#line 1573 "parser_y.c"
     break;
 
   case 32:
 #line 167 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processLE();   }
-#line 1573 "parser_y.c"
+#line 1579 "parser_y.c"
     break;
 
   case 33:
 #line 168 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processGE();   }
-#line 1579 "parser_y.c"
+#line 1585 "parser_y.c"
     break;
 
   case 34:
 #line 169 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processLEQ();  }
-#line 1585 "parser_y.c"
+#line 1591 "parser_y.c"
     break;
 
   case 35:
 #line 170 "parser.ypp"
     { (yyval.number) = code->getCurrentPosition(); code->processGEQ();  }
-#line 1591 "parser_y.c"
+#line 1597 "parser_y.c"
     break;
 
   case 36:
 #line 173 "parser.ypp"
     { auto val = (yyvsp[0].number); code->stackValue(val); }
-#line 1597 "parser_y.c"
+#line 1603 "parser_y.c"
     break;
 
   case 37:
 #line 174 "parser.ypp"
     { try{code->verifyStack();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
                                               } }
-#line 1604 "parser_y.c"
+#line 1610 "parser_y.c"
     break;
 
   case 38:
@@ -1608,7 +1614,7 @@ yyreduce:
     { auto pid = (yyvsp[0].str); try{code->stackVariable(*pid);}
                                                             catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
                                                             } }
-#line 1612 "parser_y.c"
+#line 1618 "parser_y.c"
     break;
 
   case 39:
@@ -1616,7 +1622,7 @@ yyreduce:
     { auto pid = (yyvsp[-1].str); auto name = (yyvsp[-3].str); try{code->stackArrayWithVariable(*pid,*name);}
                                                             catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
                                                             } }
-#line 1620 "parser_y.c"
+#line 1626 "parser_y.c"
     break;
 
   case 40:
@@ -1624,11 +1630,11 @@ yyreduce:
     { auto pid = (yyvsp[-3].str); auto val = (yyvsp[-1].number); try{code->stackArrayWithConst(val,*pid);}
                                                             catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
                                                             } }
-#line 1628 "parser_y.c"
+#line 1634 "parser_y.c"
     break;
 
 
-#line 1632 "parser_y.c"
+#line 1638 "parser_y.c"
 
       default: break;
     }

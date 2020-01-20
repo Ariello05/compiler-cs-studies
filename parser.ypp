@@ -159,7 +159,7 @@ expression:     value                 { $$ = code->getCurrentPosition(); code->g
                 | value MINUS value   { $$ = code->getCurrentPosition(); code->subVars();  }                                                  
                 | value TIMES value   { $$ = code->getCurrentPosition(); code->mulVars();  }                                                     
                 | value DIV value     { $$ = code->getCurrentPosition(); code->divVars();  }                                              
-                | value MOD value                                                      
+                | value MOD value     { $$ = code->getCurrentPosition(); code->modVars();  }                                             
 ;
 
 condition:      value EQ value      { $$ = code->getCurrentPosition(); code->processEQ();   }              
