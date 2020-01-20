@@ -27,6 +27,7 @@ class MemBlock{
         this->value = value;
         this->type = type;
         isDef = true;
+        //std::cerr<<name << isDef << "\n";
     }
     MemBlock(MTYPE type, string name=""){
         this->name = name;
@@ -35,6 +36,8 @@ class MemBlock{
         if(type == CONST){
             throw std::runtime_error("Can't declare undefined const");
         }
+        //std::cerr<<name << isDef << "\n";
+
     }
 
     void setValue(long long value){
@@ -54,6 +57,7 @@ class MemBlock{
     }
 
     bool isDefined(){
+        //std::cerr<<name << isDef << "\n";
         return isDef;
     }
 

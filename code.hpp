@@ -124,7 +124,7 @@ private:
     void defineValue(long long value);
     void defineValue(std::vector<string> & storeCode, long long value);
 
-
+    bool forward;
 
     std::vector<string> vm;
     std::shared_ptr<MemoryController> mc;

@@ -36,6 +36,7 @@ void Coder::declareVariable(string name){
 
 /* EXPRESSION BLOCK */
 void Coder::addVars(){
+    forward = true;
     if(args.size() > 2){
         std::runtime_error("Stack shouldn't have more than 1 value here");
     }
@@ -123,6 +124,7 @@ void Coder::addVars(){
 }
 
 void Coder::subVars(){
+    forward = true;
     if(args.size() > 2){
         std::runtime_error("Stack shouldn't have more than 1 value here");
     }
@@ -223,6 +225,7 @@ void Coder::subVars(){
 }
 
 void Coder::mulVars(){
+    forward = false;
     if(args.size() > 2){
         std::runtime_error("Stack shouldn't have more than 1 value here");
     }
@@ -254,7 +257,7 @@ void Coder::mulVars(){
                 break;
 
                 case VARIABLE:{// 1 * a
-                    two = mc->smartGetSpecialIndex(mc->primary);
+                    //two = mc->smartGetSpecialIndex(mc->primary);
                     vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(two)); 
 
@@ -262,11 +265,12 @@ void Coder::mulVars(){
                     defineValue(first.value);
                     vm.push_back("STORE " + std::to_string(cone));//const in AC
                     vm.push_back("STORE " + std::to_string(one));//const in AC
+
                 }
                 break;
 
                 case ARRAYVAR:{// 1 * t(a)
-                    two = mc->smartGetSpecialIndex(mc->primary);
+                    //two = mc->smartGetSpecialIndex(mc->primary);
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(two)); 
 
@@ -289,17 +293,17 @@ void Coder::mulVars(){
                     vm.push_back("STORE " + std::to_string(ctwo));
                     vm.push_back("STORE " + std::to_string(two));//const in AC
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(one)); // a in AC
                 }break;
 
                 case VARIABLE:{// a * b
-                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    //two = mc->smartGetSpecialIndex(mc->secondary);
                     vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(two)); 
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     if(first.variableIndex != second.variableIndex)
                         vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(one)); // a in AC
@@ -307,12 +311,12 @@ void Coder::mulVars(){
                 }break;
 
                 case ARRAYVAR:{// a * t(b)
-                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    //two = mc->smartGetSpecialIndex(mc->secondary);
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
                     //mc->push_back("LOAD " + std::to_string(second.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(two)); 
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(one)); // a in AC
                 }break;
@@ -332,27 +336,27 @@ void Coder::mulVars(){
                     vm.push_back("STORE " + std::to_string(ctwo)); 
                     vm.push_back("STORE " + std::to_string(two));//const in AC
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
                 }break;
 
                 case VARIABLE:{// t(a) * b
-                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    //two = mc->smartGetSpecialIndex(mc->secondary);
                     vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(two)); 
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
                 }break;
 
                 case ARRAYVAR:{// t(a) * t(b) //TODO: same index
-                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    //two = mc->smartGetSpecialIndex(mc->secondary);
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(two)); // t(a) in AC
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
                 }break;
@@ -418,6 +422,7 @@ void Coder::mulVars(){
 }
 
 void Coder::divVars(){
+    forward = false;
     if(args.size() > 2){
         std::runtime_error("Stack shouldn't have more than 1 value here");
     }
@@ -460,7 +465,7 @@ void Coder::divVars(){
                 break;
 
                 case VARIABLE:{// 1 / a
-                    two = mc->smartGetSpecialIndex(mc->primary);
+                    //two = mc->smartGetSpecialIndex(mc->primary);
                     vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(two)); 
                     vm.push_back("STORE " + std::to_string(ogTwo));
@@ -473,7 +478,7 @@ void Coder::divVars(){
                 break;
 
                 case ARRAYVAR:{// 1 * t(a)
-                    two = mc->smartGetSpecialIndex(mc->primary);
+                    //two = mc->smartGetSpecialIndex(mc->primary);
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(two)); 
                     vm.push_back("STORE " + std::to_string(ogTwo));
@@ -504,18 +509,18 @@ void Coder::divVars(){
                     vm.push_back("STORE " + std::to_string(ogTwo));
                     vm.push_back("STORE " + std::to_string(two));//left const in AC
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(one)); // a in AC
                 }break;
 
                 case VARIABLE:{// a / b
-                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    //two = mc->smartGetSpecialIndex(mc->secondary);
                     vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(two)); 
                     vm.push_back("STORE " + std::to_string(ogTwo));
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     if(first.variableIndex != second.variableIndex)
                         vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(one)); // a in AC
@@ -523,13 +528,13 @@ void Coder::divVars(){
                 }break;
 
                 case ARRAYVAR:{// a * t(b)
-                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    //two = mc->smartGetSpecialIndex(mc->secondary);
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
                     //mc->push_back("LOAD " + std::to_string(second.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(two)); 
                     vm.push_back("STORE " + std::to_string(ogTwo));
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(one)); // a in AC
                 }break;
@@ -550,29 +555,29 @@ void Coder::divVars(){
                     vm.push_back("STORE " + std::to_string(ogTwo));
                     vm.push_back("STORE " + std::to_string(two));
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
                 }break;
 
                 case VARIABLE:{// t(a) * b
-                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    //two = mc->smartGetSpecialIndex(mc->secondary);
                     vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(two)); 
                     vm.push_back("STORE " + std::to_string(ogTwo));
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
                 }break;
 
                 case ARRAYVAR:{// t(a) * t(b) //TODO: same index
-                    two = mc->smartGetSpecialIndex(mc->secondary);
+                    //two = mc->smartGetSpecialIndex(mc->secondary);
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(two)); 
                     vm.push_back("STORE " + std::to_string(ogTwo));
 
-                    one = mc->smartGetSpecialIndex(mc->primary);
+                    //one = mc->smartGetSpecialIndex(mc->primary);
                     loadArrayVar(first.arrayStartIndex,first.variableIndex);//LOAD
                     vm.push_back("STORE " + std::to_string(one)); // t(a) in AC
                 }break;
@@ -772,6 +777,7 @@ void Coder::verifyStack(){
         }break;
 
         case VARIABLE:{
+            //std::cerr<<std::to_string(val.variableIndex)<<"|\n";
             if(mc->isUndef(val.variableIndex)){
                 throw std::runtime_error("Undefined variable: " + val.name);
             }
@@ -828,25 +834,49 @@ void Coder::assignValueToVar(long long injectPoint){//value is in AC
 
     switch(block.type){
         case ARRAYVAR:{
-            
-            std::vector<string> injectString;
-            auto arrayIndex = block.arrayStartIndex;
-            auto varIndex = block.variableIndex;
+            if(forward){//TODO: better fix for this
+                std::vector<string> injectString;
+                auto arrayIndex = block.arrayStartIndex;
+                auto varIndex = block.variableIndex;
 
-            auto pos = block.name.find("-");
-            if(mc->isUndef(varIndex)){
-                throw std::runtime_error("Undefined variable: " + block.name.substr(pos+1,block.name.size()));
+                auto pos = block.name.find("-");
+                if(mc->isUndef(varIndex)){
+                    throw std::runtime_error("Undefined variable: " + block.name.substr(pos+1,block.name.size()));
+                }
+                //std::cerr << arrayIndex;
+                //injectString.push_back("BEGIN");
+                defineValueUnsinged(injectString, arrayIndex);
+                injectString.push_back("ADD " + std::to_string(varIndex));
+                auto indexToStore = mc->getIndexOfSpecial(mc->forward);
+                mc->setValueIn(indexToStore,0);
+                mc->clearFlagsInArray(arrayIndex);
+                injectString.push_back("STORE " + std::to_string(indexToStore));//STORE into special
+                vm.push_back("STOREI " + std::to_string(indexToStore));//STORE at wherever it points
+                mc->setValueIn(0, 0);//update AC
+                //injectString.push_back("END");
+                vm.insert(vm.begin()+injectPoint,injectString.begin(),injectString.end());
             }
-            //std::cerr << arrayIndex;
-            defineValueUnsinged(injectString, arrayIndex);
-            injectString.push_back("ADD " + std::to_string(varIndex));
-            auto indexToStore = mc->getIndexOfSpecial(mc->forward);
-            mc->setValueIn(indexToStore,0);
-            mc->clearFlagsInArray(arrayIndex);
-            injectString.push_back("STORE " + std::to_string(indexToStore));//STORE into special
-            vm.push_back("STOREI " + std::to_string(indexToStore));//STORE at wherever it points
-            mc->setValueIn(0, 0);//update AC
-            vm.insert(vm.begin()+injectPoint,injectString.begin(),injectString.end());
+            else{
+                auto arrayIndex = block.arrayStartIndex;
+                auto varIndex = block.variableIndex;
+                auto local = mc->getIndexOfSpecial(mc->primary);
+                auto indexToStore = mc->getIndexOfSpecial(mc->forward);
+                vm.push_back("STORE " + std::to_string(local));
+
+                auto pos = block.name.find("-");
+                if(mc->isUndef(varIndex)){
+                    throw std::runtime_error("Undefined variable: " + block.name.substr(pos+1,block.name.size()));
+                }
+                defineValueUnsinged(arrayIndex);
+                vm.push_back("ADD " + std::to_string(varIndex));
+                mc->setValueIn(indexToStore,0);
+                mc->clearFlagsInArray(arrayIndex);
+                vm.push_back("STORE " + std::to_string(indexToStore));//STORE into special
+                vm.push_back("LOAD " + std::to_string(local));
+                vm.push_back("STOREI " + std::to_string(indexToStore));//STORE at wherever it points
+                mc->setValueIn(0, 0);//update AC
+            }
+            
         }
         break;
 

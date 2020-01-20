@@ -11,10 +11,15 @@ IDENTIFIER              [_a-z]
 DIGIT                   [0-9]
 PUNCT                   [\(\)\:\;\,]
 
-%x OPS
+%x ENE
 
 %%
-"[".*"]"
+
+"["             { BEGIN(ENE);       }
+<ENE>"]"        { BEGIN(INITIAL);  }
+<ENE>(\n|.)
+<ENE><<EOF>>    {   std::cerr << "\033[1;31m[ERROR]\033[0m " << "Unfinished comment!" << std::endl; yyterminate(); }
+
 "DECLARE"               { return DECLARE; }
 "BEGIN"                 { return BEGINA; }
 "END"                   { return END; }

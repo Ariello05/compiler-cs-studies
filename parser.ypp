@@ -165,7 +165,7 @@ expression:     value                 { $$ = code->getCurrentPosition(); code->g
 condition:      value EQ value      { $$ = code->getCurrentPosition(); code->processEQ();   }              
                 | value NEQ value   { $$ = code->getCurrentPosition(); code->processNEQ();  }              
                 | value LE value    { $$ = code->getCurrentPosition(); code->processLE();   }              
-                | value GE value    { $$ = code->getCurrentPosition(); code->processGE();   }              
+                | value GE value    { $$ = code->getCurrentPosition(); code->processGE();   }                
                 | value LEQ value   { $$ = code->getCurrentPosition(); code->processLEQ();  }              
                 | value GEQ value   { $$ = code->getCurrentPosition(); code->processGEQ();  }              
 ;

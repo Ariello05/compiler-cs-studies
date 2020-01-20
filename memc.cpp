@@ -42,6 +42,8 @@ unsigned long long MemoryController::declareArray(string name, long long begin, 
 
     indexer += array.getSize()-1;
     blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(end) + ")"))));
+    indexer++;
+    //std::cerr<<std::to_string(indexer)<<"|LAST\n";
     /*
     for(auto i = begin; i<=end; ++i){//TODO: better way to acomplish tihs
         if(i == begin || i == end)
@@ -110,6 +112,7 @@ ForLoopBlock MemoryController::pushIterator(string name, bool isSpecial){
             throw std::runtime_error("Variable: " + name + " is already defined!");
         }                                                                       //TODO: 0 flag, better way?
         blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(0,MTYPE::ITERATOR,name))));//WE HOLD VARIABLE AT SOME INDEX
+        //std::cerr<<std::to_string(indexer)<<"|INDEX\n";
         variables.insert(std::make_pair(name,indexer));//ITERATOR IS ALSO A VARIABLE
         ForLoopBlock f(name,indexer);
         iterators.push_back(f);
@@ -145,7 +148,7 @@ unsigned long long MemoryController::popIterator(){
     iterators.pop_back();
     blocks.erase(index);
     if(forblock.isSpecial()){
-        std::cerr<<"XD\n";
+        //std::cerr<<"XD\n";
         blocks.erase(forblock.getSpecialIndex());//TODO: mark old index as usable again
     }
     //getBlock(index)->undef();

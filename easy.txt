@@ -1,7 +1,10 @@
 DECLARE
-    a
+    j,k,s(1:10),i(1:10)
 BEGIN
-	a ASSIGN 1232 TIMES 4213;
-    WRITE a;
-END
+    j ASSIGN 2;
+    k ASSIGN 1;
+    FOR i FROM 1 TO 10 DO
+        s(1) ASSIGN i;
+    ENDFOR
 
+END
