@@ -1,0 +1,13 @@
+DECLARE 
+    a,b
+BEGIN
+    a ASSIGN 1;
+    FOR i FROM 1 TO 10 DO
+        a ASSIGN i;
+        IF i EQ 5 THEN
+            b ASSIGN 5;
+        ENDIF
+    ENDFOR
+
+    WRITE b;
+END

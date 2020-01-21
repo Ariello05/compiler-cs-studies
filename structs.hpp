@@ -79,7 +79,7 @@ class MemBlock{
 
 class ForLoopBlock{
     public:
-    ForLoopBlock(string iterator, unsigned long long iteratorIndex, unsigned long long special = 0){
+    ForLoopBlock(string iterator, unsigned long long iteratorIndex, bool increasing, unsigned long long special = 0){
         this->iterator = iterator;
         this->specialIndex = special;
         this->iteratorIndex = iteratorIndex;
@@ -88,6 +88,33 @@ class ForLoopBlock{
         }else{
             this->special = false;
         }
+        valueKnown = false;
+        firstIteration = 0;
+        increases = increasing;
+    }
+
+    ForLoopBlock(){
+        valueKnown = false;
+    }
+
+    void setKnownInfo(long long firstIteration ){
+        this->firstIteration = firstIteration;
+        valueKnown = true;
+    }
+
+    long long getFirstIteration(){
+        if(!valueKnown){
+            throw std::runtime_error("Can't access unkown start point of iterator");
+        }
+        return firstIteration;
+    }
+
+    bool isIncreasing(){
+        return increases;
+    }
+
+    bool isKnown(){
+        return valueKnown;
     }
 
     bool isSpecial(){
@@ -109,9 +136,61 @@ class ForLoopBlock{
         return specialIndex;
     }
 
-    private:
+private:
+
     bool special;// 1 TO t(a) requires to hold 2 values, iterator and special to hold value of t(a)
     string iterator;
+
+    bool valueKnown;
+    long long firstIteration;
+    bool increases;
+
     unsigned long long iteratorIndex;
     unsigned long long specialIndex;
+};
+
+
+                //ARRAY(CONST) is treated as variable
+enum IDENTIFIER {ARRAYVAR,CONSTVALUE,VARIABLE};
+class SmartBlock{//Helper
+    public:
+    SmartBlock(IDENTIFIER type, unsigned long long value=0 , unsigned long long varName =0, unsigned long long arrayName = 0, string name = ""){
+        this->type = type;
+        switch(type){
+            case ARRAYVAR:
+                if(varName == 0){
+                    throw std::runtime_error("Define varName!");
+                }
+                if(arrayName == 0){
+                    throw std::runtime_error("Define arrayName!");
+                }
+                break;
+            case CONSTVALUE://TODO : rethink
+                //if(value == 0){
+                //    throw std::runtime_error("Define value!");
+                //}
+                break;
+            case VARIABLE:
+                if(varName == 0){
+                    throw std::runtime_error("Define varName!");
+                }
+                break;
+        }
+        this->value = value;
+        this->arrayStartIndex = arrayName;
+        this->variableIndex = varName;
+        this->name = name;
+    }
+    SmartBlock& operator=(SmartBlock & two){
+        this->type = two.type;
+        this->value = two.value;
+        this->arrayStartIndex = two.arrayStartIndex;
+        this->variableIndex = two.variableIndex;
+        return *this;
+    }
+    IDENTIFIER type;
+    unsigned long long variableIndex;
+    unsigned long long arrayStartIndex;
+    long long value;
+    string name;
 };

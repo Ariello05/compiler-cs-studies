@@ -114,8 +114,8 @@ public:
     unsigned long long declareValue(long long value);
     unsigned long long declareArray(string name, long long begin, long long end);
     unsigned long long declareSpecial(string name);
-    unsigned long long pushSimpleIterator(string name);
-    ForLoopBlock pushIterator(string name, bool isSpecial);
+    ForLoopBlock pushSimpleIterator(string name, bool for_to);
+    ForLoopBlock pushIterator(string name, bool isSpecial, bool for_to);
 
     unsigned long long popIterator();
     unsigned long long smartGetSpecialIndex(string name);
@@ -127,6 +127,9 @@ public:
     std::shared_ptr<MemBlock> getBlock(string name);
     std::shared_ptr<MemBlock> getBlock(unsigned long long index);
     std::shared_ptr<MemBlock> getBlock(string name, unsigned long long index);
+
+    ForLoopBlock getIterator(string name);
+    ForLoopBlock getLastIterator();
 
     long long getValueOfVar(string name);
     long long getValueOfIndex(unsigned long long index);

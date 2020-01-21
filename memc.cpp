@@ -100,13 +100,13 @@ unsigned long long MemoryController::smartGetSpecialIndex(string name){
     }
 }
 
-unsigned long long MemoryController::pushSimpleIterator(string name){
-    auto f = pushIterator(name,false);
+ForLoopBlock MemoryController::pushSimpleIterator(string name, bool for_to){
+    auto f = pushIterator(name,false,for_to);
     
-    return f.getIteratorIndex();
+    return f;
 }
 
-ForLoopBlock MemoryController::pushIterator(string name, bool isSpecial){
+ForLoopBlock MemoryController::pushIterator(string name, bool isSpecial, bool for_to){
     if(!isSpecial){
         if(variables.find(name) != variables.end()){
             throw std::runtime_error("Variable: " + name + " is already defined!");
@@ -114,7 +114,7 @@ ForLoopBlock MemoryController::pushIterator(string name, bool isSpecial){
         blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(0,MTYPE::ITERATOR,name))));//WE HOLD VARIABLE AT SOME INDEX
         //std::cerr<<std::to_string(indexer)<<"|INDEX\n";
         variables.insert(std::make_pair(name,indexer));//ITERATOR IS ALSO A VARIABLE
-        ForLoopBlock f(name,indexer);
+        ForLoopBlock f(name,indexer,for_to);
         iterators.push_back(f);
 
         ++indexer;
@@ -129,7 +129,7 @@ ForLoopBlock MemoryController::pushIterator(string name, bool isSpecial){
         ++indexer;
         blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(0,MTYPE::SPECIAL,name))));//WE HOLD VARIABLE AT SOME INDEX
         ++indexer;
-        ForLoopBlock f(name,indexer-2,indexer-1);
+        ForLoopBlock f(name,indexer-2,for_to,indexer-1);
         iterators.push_back(f);
 
         return f;
@@ -203,6 +203,28 @@ std::shared_ptr<MemBlock> MemoryController::getBlock(unsigned long long index){
 std::shared_ptr<MemBlock> MemoryController::getBlock(string name, unsigned long long index){
     auto arr = arrays.find(name);
     return blocks.find(arr->second.getMemBlockIndex(index))->second;//inside throw
+}
+
+ForLoopBlock MemoryController::getIterator(string name){
+    auto begin = iterators.begin();
+    const auto end = iterators.end();
+    while(begin != end){
+        auto block = *begin;
+        if(block.getName() == name){
+            
+            return block;
+        }
+    
+        ++begin;
+    }
+    throw std::runtime_error("No iterator of this name!");
+}
+
+ForLoopBlock MemoryController::getLastIterator(){
+    if(iterators.size() == 0){
+        throw std::runtime_error("No iterators defined!");
+    }
+    return iterators.back();
 }
 
 //Depracated for now

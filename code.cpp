@@ -4,6 +4,7 @@
 
 Coder::Coder(std::shared_ptr<MemoryController> mc){
     this->mc = mc;
+    loopDepth = 0;
     auto a = mc->declareValue(1);
     auto b = mc->declareValue(2);
     auto c = mc->declareValue(3);
@@ -829,6 +830,10 @@ void Coder::modVars(){
 
 /* CONDITION BLOCK*/
 void Coder::processEQ(){
+    auto right = args.top(); args.pop();
+    auto left = args.top(); args.push(right);
+    flc.proccessCondition(left,CONDITION_TYPE::_EQ,right);
+
     subVars();//after this value is in AC
     auto before = vm.size();
     vm.push_back("JZERO " + std::to_string(before+2));
@@ -837,6 +842,10 @@ void Coder::processEQ(){
 }
 
 void Coder::processNEQ(){
+    auto right = args.top(); args.pop();
+    auto left = args.top(); args.push(right);
+    flc.proccessCondition(left,CONDITION_TYPE::_NEQ,right);
+
     subVars();//after this value is in AC
     vm.push_back("JZERO ");
     auto before = vm.size();
@@ -844,6 +853,10 @@ void Coder::processNEQ(){
 }
 
 void Coder::processLE(){
+    auto right = args.top(); args.pop();
+    auto left = args.top(); args.push(right);
+    flc.proccessCondition(left,CONDITION_TYPE::_LE,right);
+
     subVars();//after this value is in AC
     auto before = vm.size();
     vm.push_back("JNEG " + std::to_string(before+2));
@@ -852,6 +865,10 @@ void Coder::processLE(){
 }
 
 void Coder::processGE(){
+    auto right = args.top(); args.pop();
+    auto left = args.top(); args.push(right);
+    flc.proccessCondition(left,CONDITION_TYPE::_GE,right);
+
     subVars();//after this value is in AC
     auto before = vm.size();
     vm.push_back("JPOS " + std::to_string(before+2));
@@ -860,6 +877,10 @@ void Coder::processGE(){
 }
 
 void Coder::processLEQ(){
+    auto right = args.top(); args.pop();
+    auto left = args.top(); args.push(right);
+    flc.proccessCondition(left,CONDITION_TYPE::_LEQ,right);
+
     subVars();//after this value is in AC
     vm.push_back("JPOS ");
     auto before = vm.size();
@@ -867,6 +888,10 @@ void Coder::processLEQ(){
 }
 
 void Coder::processGEQ(){
+    auto right = args.top(); args.pop();
+    auto left = args.top(); args.push(right);
+    flc.proccessCondition(left,CONDITION_TYPE::_GEQ,right);
+
     subVars();//after this value is in AC
     vm.push_back("JNEG ");
     auto before = vm.size();
@@ -914,8 +939,17 @@ void Coder::verifyStack(){
 
         case VARIABLE:{
             //std::cerr<<std::to_string(val.variableIndex)<<"|\n";
+
             if(mc->isUndef(val.variableIndex)){
-                throw std::runtime_error("Undefined variable: " + val.name);
+                if(flc.inKnownFor()){
+                    VarAccess va;
+                    va.type = ACCESS_TYPE::CALL;
+                    va.variableName = val.name;
+                    va.variableIndex = val.variableIndex;
+                    flc.proccessAction(va);
+                }else{
+                    throw std::runtime_error("Undefined variable: " + val.name);
+                }
             }
 
         }break;
@@ -1026,6 +1060,15 @@ void Coder::assignValueToVar(long long injectPoint){//value is in AC
             if(mc->isIterator(id)){
                 throw std::runtime_error("Can't modify value of iterator");
             }
+
+            if(flc.inKnownFor()){
+                VarAccess va;
+                va.type = ACCESS_TYPE::ASSIGNMENT;
+                va.variableName = block.name;
+                va.variableIndex = block.variableIndex;
+                flc.proccessAction(va);
+            }
+
             mc->setValueIn(0, 0);//update AC
             //std::cerr<< "updating: " << std::to_string(id) << std::endl;
             mc->setValueIn(id, 0);//update variable of index id
@@ -1033,6 +1076,10 @@ void Coder::assignValueToVar(long long injectPoint){//value is in AC
         }
         break;
     }
+}
+
+void Coder::startif(){
+
 }
 
 void Coder::endif(){
@@ -1064,19 +1111,25 @@ void Coder::startelse(){
  * Used mainly before condition in while loop 
 */ 
 void Coder::stackJump(){
-    
+    flc.terminate();
     jumps.push(vm.size()-1);//Stack jump
 }
 
-void Coder::endWhile(long long start){
-    if(jumps.size() < 1){
-        throw std::runtime_error("Jump stack should be of size atleast 1!");   
+void Coder::stackJump(long long index){
+    flc.terminate();
+    jumps.push(index);//Stack jump
+}
+
+void Coder::endWhile(){
+    if(jumps.size() < 2){
+        throw std::runtime_error("Jump stack should be of size atleast 2!");   
     }
+    auto ifjump = jumps.top(); jumps.pop();
     auto current = vm.size();
-    auto ifjump = jumps.top();
-    jumps.pop();
-    vm[ifjump] += std::to_string(current+1);
-    vm.push_back("JUMP " + std::to_string(start));
+    auto beforeCheck = jumps.top(); jumps.pop();
+
+    vm[beforeCheck] += std::to_string(current+1);
+    vm.push_back("JUMP " + std::to_string(ifjump));
 }
 
 void Coder::endDoWhile(){//TODO: fix this abomination
@@ -1105,12 +1158,15 @@ void Coder::handleToFor(string iterator){
                     if(first.value > second.value){
                         throw std::runtime_error("In FOR TO: Left variable can't be bigger than right");
                     }
-                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
+                    auto forLoopBlock = mc->pushSimpleIterator(iterator,true);
+                    forLoopBlock.setKnownInfo(first.value);
+                    flc.setForLoopBlock(forLoopBlock);
+
                     auto endValueIndex = mc->declareValue(second.value);
                     defineValue(second.value);
                     vm.push_back("STORE " + std::to_string(endValueIndex));
                     defineValue(first.value);
-                    vm.push_back("STORE " +std::to_string(iteratorIndex));
+                    vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));
                     jumps.push(vm.size());//BEFORE COMPARISON
                     //vm.push_back("LOAD " +std::to_string(iteratorIndex) );
                     vm.push_back("SUB " + std::to_string(endValueIndex));
@@ -1120,7 +1176,10 @@ void Coder::handleToFor(string iterator){
                 break;
 
                 case VARIABLE:{// 1 TO a
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,true);
+                    forLoopBlock.setKnownInfo(first.value);
+                    flc.setForLoopBlock(forLoopBlock);
+
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
 
                     defineValue(first.value);
@@ -1136,7 +1195,9 @@ void Coder::handleToFor(string iterator){
                 break;
 
                 case ARRAYVAR:{// 1 TO t(a)
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,true);
+                    forLoopBlock.setKnownInfo(first.value);
+                    flc.setForLoopBlock(forLoopBlock);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     
                     defineValue(first.value);
@@ -1156,12 +1217,12 @@ void Coder::handleToFor(string iterator){
         case VARIABLE:{
             switch(second.type){
                 case CONSTVALUE:{// a TO 1
-                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
+                    auto forLoopBlock = mc->pushSimpleIterator(iterator,true);
                     auto endIndex = mc->declareValue(second.value);
                     defineValue(second.value);
                     vm.push_back("STORE " +std::to_string(endIndex));//store end of for
                     vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
-                    vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
+                    vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));//store to iterator
                     jumps.push(vm.size());//BEFORE COMPARISON
                     vm.push_back("SUB " + std::to_string(endIndex));
                     jumps.push(vm.size());//WHERE TO END?
@@ -1169,7 +1230,7 @@ void Coder::handleToFor(string iterator){
                 }break;
 
                 case VARIABLE:{// a TO b
-                    auto forBlock = mc->pushIterator(iterator,true);
+                    auto forBlock = mc->pushIterator(iterator,true,true);
                     auto iteratorIndex = forBlock.getIteratorIndex();
                     auto endIndex = forBlock.getSpecialIndex();
                     vm.push_back("LOAD " +std::to_string(second.variableIndex));//load variable
@@ -1183,7 +1244,7 @@ void Coder::handleToFor(string iterator){
                 }break;
 
                 case ARRAYVAR:// a TO t(b)
-                    auto forBlock = mc->pushIterator(iterator,true);
+                    auto forBlock = mc->pushIterator(iterator,true,true);
                     auto iteratorIndex = forBlock.getIteratorIndex();
                     auto endIndex = forBlock.getSpecialIndex();
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);//loads arrayvar value 
@@ -1202,7 +1263,7 @@ void Coder::handleToFor(string iterator){
         case ARRAYVAR:{
             switch(second.type){
                 case CONSTVALUE:{// t(a) TO 1
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,true);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     auto iteratorIndex = forLoopBlock.getIteratorIndex();
                     
@@ -1217,7 +1278,7 @@ void Coder::handleToFor(string iterator){
                 }break;
 
                 case VARIABLE:{// t(a) TO b
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,true);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     auto iteratorIndex = forLoopBlock.getIteratorIndex();
                     
@@ -1231,7 +1292,7 @@ void Coder::handleToFor(string iterator){
                     vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
                 }break;
                 case ARRAYVAR:// t(a) TO t(b)
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,true);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     auto iteratorIndex = forLoopBlock.getIteratorIndex();
                     
@@ -1266,12 +1327,12 @@ void Coder::handleDownToFor(string iterator){
                     if(first.value < second.value){
                         throw std::runtime_error("In FOR DOWNTO: right variable can't be bigger than left");
                     }
-                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
+                    auto forLoopBlock = mc->pushSimpleIterator(iterator,false);
                     auto endValueIndex = mc->declareValue(second.value);
                     defineValue(second.value);
                     vm.push_back("STORE " + std::to_string(endValueIndex));
                     defineValue(first.value);
-                    vm.push_back("STORE " +std::to_string(iteratorIndex));
+                    vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));
                     jumps.push(vm.size());//BEFORE COMPARISON
                     //vm.push_back("LOAD " +std::to_string(iteratorIndex) );
                     vm.push_back("SUB " + std::to_string(endValueIndex));
@@ -1281,7 +1342,7 @@ void Coder::handleDownToFor(string iterator){
                 break;
 
                 case VARIABLE:{// 1 TO a
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,false);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
 
                     defineValue(first.value);
@@ -1297,7 +1358,7 @@ void Coder::handleDownToFor(string iterator){
                 break;
 
                 case ARRAYVAR:{// 1 TO t(a)
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,false);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     
                     defineValue(first.value);
@@ -1317,12 +1378,12 @@ void Coder::handleDownToFor(string iterator){
         case VARIABLE:{
             switch(second.type){
                 case CONSTVALUE:{// a TO 1
-                    auto iteratorIndex = mc->pushSimpleIterator(iterator);
+                    auto forLoopBlock = mc->pushSimpleIterator(iterator,false);
                     auto endIndex = mc->declareValue(second.value);
                     defineValue(second.value);
                     vm.push_back("STORE " +std::to_string(endIndex));//store end of for
                     vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
-                    vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
+                    vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));//store to iterator
                     jumps.push(vm.size());//BEFORE COMPARISON
                     vm.push_back("SUB " + std::to_string(endIndex));
                     jumps.push(vm.size());//WHERE TO END?
@@ -1330,7 +1391,7 @@ void Coder::handleDownToFor(string iterator){
                 }break;
 
                 case VARIABLE:{// a TO b
-                    auto forBlock = mc->pushIterator(iterator,true);
+                    auto forBlock = mc->pushIterator(iterator,true,false);
                     auto iteratorIndex = forBlock.getIteratorIndex();
                     auto endIndex = forBlock.getSpecialIndex();
                     vm.push_back("LOAD " +std::to_string(second.variableIndex));//load variable
@@ -1345,7 +1406,7 @@ void Coder::handleDownToFor(string iterator){
                 }break;
 
                 case ARRAYVAR:// a TO t(b)
-                    auto forBlock = mc->pushIterator(iterator,true);
+                    auto forBlock = mc->pushIterator(iterator,true,false);
                     auto iteratorIndex = forBlock.getIteratorIndex();
                     auto endIndex = forBlock.getSpecialIndex();
                     loadArrayVar(second.arrayStartIndex,second.variableIndex);//loads arrayvar value 
@@ -1364,7 +1425,7 @@ void Coder::handleDownToFor(string iterator){
         case ARRAYVAR:{
             switch(second.type){
                 case CONSTVALUE:{// t(a) TO 1
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,false);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     auto iteratorIndex = forLoopBlock.getIteratorIndex();
                     
@@ -1379,7 +1440,7 @@ void Coder::handleDownToFor(string iterator){
                 }break;
 
                 case VARIABLE:{// t(a) TO b
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,false);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     auto iteratorIndex = forLoopBlock.getIteratorIndex();
                     
@@ -1393,7 +1454,7 @@ void Coder::handleDownToFor(string iterator){
                     vm.push_back("JNEG ");    //TODO: STACK FOR JUMP INDEXER  
                 }break;
                 case ARRAYVAR:// t(a) TO t(b)
-                    auto forLoopBlock = mc->pushIterator(iterator,true);
+                    auto forLoopBlock = mc->pushIterator(iterator,true,false);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     auto iteratorIndex = forLoopBlock.getIteratorIndex();
                     
@@ -1415,6 +1476,8 @@ void Coder::handleDownToFor(string iterator){
 }
 
 void Coder::endFor(bool dec){
+    flc.finishForLoop();
+
     auto indexToChange = jumps.top(); jumps.pop();
     auto comparisonJump = jumps.top(); jumps.pop();
     auto iterator = mc->popIterator();
@@ -1425,6 +1488,7 @@ void Coder::endFor(bool dec){
     vm.push_back("JUMP " + std::to_string(comparisonJump));
     auto endjump = vm.size();
     vm[indexToChange] += std::to_string(endjump);
+
 }
 
 void Coder::read(){
@@ -1443,6 +1507,13 @@ void Coder::read(){
             vm.push_back("STORE " + std::to_string(item.variableIndex));//TODO: Optimize somehow
             mc->setValueIn(item.variableIndex,0);//to clear undef flag
             mc->setValueIn(0,0);//to clear undef flag
+            if(flc.inKnownFor()){
+                VarAccess va;
+                va.type = ACCESS_TYPE::ASSIGNMENT;
+                va.variableName = item.name;
+                va.variableIndex = item.variableIndex;
+                flc.proccessAction(va);
+            }
         }break;
 
         case ARRAYVAR:{
@@ -1843,4 +1914,12 @@ void Coder::defineValue(std::vector<string> & storeCode, long long value){
     }    
     mc->setValueIn(0,value);
     mc->freeRestrict();
+}
+
+void Coder::incDepth(){
+    ++loopDepth;
+}
+
+void Coder::decDepth(){
+    --loopDepth;
 }
