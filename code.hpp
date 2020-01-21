@@ -4,6 +4,7 @@
 #include <memory>
 #include <stack>
 #include "memc.hpp"
+#include <fstream>
 
 using std::string;
 namespace machine{
@@ -117,6 +118,8 @@ public:
     void printVM();
     long long getCurrentPosition();
 
+    void setOutput(string str);
+
 
 private:
     bool divSwitch(SmartBlock first, SmartBlock second, unsigned long long old_b, unsigned long long one, unsigned long long two);
@@ -127,6 +130,7 @@ private:
     void defineValue(std::vector<string> & storeCode, long long value);
 
     bool forward;
+    string filename;
 
     std::vector<string> vm;
     std::shared_ptr<MemoryController> mc;

@@ -438,8 +438,8 @@ void MemoryController::printUndefined(){
     const auto end = blocks.end();
     std::vector<string> vars;
     while(beg != end){
-        if(!beg->second->isDefined()){
-            if(beg->second->getType() == SPECIAL){
+        if(!beg->second->isDefined()){                                      //TODO: fix
+            if(beg->second->getType() == SPECIAL || beg->second->getType() == ARRAY){
                 ++beg;
                 continue;
             }
@@ -448,7 +448,7 @@ void MemoryController::printUndefined(){
         ++beg;
     }
     if(vars.size() >= 1){
-        std::cerr << "\033[1;33m[WARNING]\033[0m Undefined variables namely:" <<std::endl;
+        std::cerr << "\033[1;33m [WARNING]\033[0m Undefined variables namely:" <<std::endl;
         auto beg = vars.begin();
         const auto end = vars.end();
         while(beg != end){

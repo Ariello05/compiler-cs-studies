@@ -11,14 +11,14 @@
 int yylex();
 int yyparse();
 void yyerror(std::string er);
-//void YYABORT();
-//extern FILE *yyin;
+extern FILE *yyin;
 extern int yylineno;
 
 std::shared_ptr<MemoryController> vars = std::make_shared<MemoryController>();
 std::shared_ptr<Coder> code = std::make_shared<Coder>(vars);
 
 bool declareError = false;
+string inputName;
 
 %}
 
@@ -58,12 +58,14 @@ bool declareError = false;
 program:        DECLARE declarations BEGINA { if(declareError){YYABORT;
                                          }}
                 commands END {
-                   code->end(); vars->printUndefined(); code->printVM(); 
+                   
                    //vars->printAll();
-                   std::cerr << "\033[1;32m[SUCCESS]\033[0m " << std::endl;
+                   std::cerr << "\033[1;32m[SUCCESS] " << inputName <<"\033[0m \t" << std::endl;
+                   code->end(); code->printVM();
                    }                                                   
                 |
-                BEGINA commands END { code->end(); std::cerr << "\033[1;32m[SUCCESS]\033[0m " << std::endl; }
+                BEGINA commands END { std::cerr << "\033[1;32m[SUCCESS] " << inputName <<"\033[0m \t" << std::endl;
+                code->end(); code->printVM(); }
 ;
 
 declarations:   declarations ',' pidentifier                
@@ -190,12 +192,20 @@ identifier:     pidentifier                           { auto pid = $1; try{code-
 %%
 
 void yyerror(std::string err){
-  std::cerr << "\033[1;31m[ERROR]\033[0m " << err << std::endl;
+  std::cerr << "\033[1;31m[ERROR] " << inputName <<"\033[0m \t \033[1;30m[LINE:" << yylineno << "]\033[0m\t" << err << std::endl;
 }
 
 int main(int argc, char** argv) {
+  if(argc < 3){
+    std::cerr << "input.imp \t output.mr\n";
+    return 0;
+  }
+  inputName = argv[1];
 
-        yyparse();
+  yyin = fopen(argv[1], "r"); 
+  code->setOutput(argv[2]);
 
-        return 0;
+  yyparse();  
+  return 0;
+
 }

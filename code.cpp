@@ -1027,6 +1027,7 @@ void Coder::assignValueToVar(long long injectPoint){//value is in AC
                 throw std::runtime_error("Can't modify value of iterator");
             }
             mc->setValueIn(0, 0);//update AC
+            //std::cerr<< "updating: " << std::to_string(id) << std::endl;
             mc->setValueIn(id, 0);//update variable of index id
             vm.push_back("STORE " + std::to_string(id));//store to variable of inddex id
         }
@@ -1483,16 +1484,25 @@ void Coder::printVM(){
     auto beg = vm.begin();
     auto end = vm.end();
     //std::cout << "[VM:]" << std::endl;
+    std::ofstream file(filename);
+
     while(beg != end){
-        std::cout<< *beg << std::endl;
+        file << *beg << std::endl;
         beg++;
     }
+
+    file.close();
+
+    mc->printUndefined();
 }
 
 void Coder::end(){
     vm.push_back("HALT");
 }
 
+void Coder::setOutput(string str){
+    filename = str;
+}
 
 long long Coder::getCurrentPosition(){
     return vm.size();
