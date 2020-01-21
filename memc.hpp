@@ -167,7 +167,7 @@ private:
     std::map<string, unsigned long long> variables;
     std::map<string, Array> arrays;
     std::map<string, unsigned long long> specials;
-    std::vector<ForLoopBlock> iterators;//TODO: what if eg. for i .. endfor ... for i .. endfor
+    std::vector<ForLoopBlock> iterators;
     unsigned long long indexer;
     unsigned long long restr = 0;
 };

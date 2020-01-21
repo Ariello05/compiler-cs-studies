@@ -1,0 +1,11 @@
+DECLARE 
+	a,b
+BEGIN
+	READ a;
+	WRITE a;
+	b ASSIGN a MOD 10;
+	WRITE b;
+	b ASSIGN a MOD 100;
+	b ASSIGN b DIV 10;
+	WRITE b;
+END

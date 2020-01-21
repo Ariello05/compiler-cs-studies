@@ -1187,6 +1187,7 @@ void Coder::handleToFor(string iterator){
                     vm.push_back("LOAD " + std::to_string(second.variableIndex));
                     vm.push_back("STORE " + std::to_string(endValueIndex));
 
+		    vm.push_back("LOAD " + std::to_string(forLoopBlock.getIteratorIndex())); 
                     jumps.push(vm.size());//BEFORE COMPARISON
                     vm.push_back("SUB " + std::to_string(endValueIndex));
                     jumps.push(vm.size());//WHERE TO END?
@@ -1349,7 +1350,8 @@ void Coder::handleDownToFor(string iterator){
                     vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));
                     vm.push_back("LOAD " + std::to_string(second.variableIndex));
                     vm.push_back("STORE " + std::to_string(endValueIndex));
-
+	
+		    vm.push_back("LOAD " + std::to_string(forLoopBlock.getIteratorIndex()));
                     jumps.push(vm.size());//BEFORE COMPARISON
                     vm.push_back("SUB " + std::to_string(endValueIndex));
                     jumps.push(vm.size());//WHERE TO END?

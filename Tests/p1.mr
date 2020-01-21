@@ -1,0 +1,65 @@
+# p(2) - addr, p(3) - n, p(4) - i, p(5) - j, p(6) - offset(sito), p(7) - i'
+SUB 0
+INC
+STORE 1		# stala 1
+INC
+INC
+SHIFT 1
+STORE 6		# offset = 6 sito = p(8)..p(106)
+SHIFT 1
+SHIFT 1
+INC
+SHIFT 1
+SHIFT 1
+STORE 3		# n = 100
+STORE 4		# i = 100
+DEC		# i' = 99 (licznik for)
+JZERO 28	# !(i'>0) - warunek for
+DEC
+STORE 7		# i'
+LOAD 4
+ADD 6
+STORE 2		# addr = i+offset
+LOAD 1
+STOREI 2	# sito(i) = 1
+LOAD 4
+DEC
+STORE 4		# i = i-1
+LOAD 7		# i'
+JUMP 15		# end for
+INC
+INC
+STORE 4		# i = 2
+LOAD 3
+DEC		# i' = 99 (licznik for)
+JZERO 62	# !(i'>0) - warunek for
+DEC
+STORE 7		# i'
+LOAD 4
+ADD 6
+STORE 2		# addr = i+offset
+LOADI 2
+JZERO 57	# sito(i)==0
+LOAD 4		# i
+PUT		# write i
+ADD 4
+STORE 5		# j = i+i
+LOAD 3
+SUB 5
+JNEG 57		# !(j<=n) - warunek while
+LOAD 5
+ADD 6
+STORE 2		# add = j+offset
+SUB 0
+STOREI 2	# sito(j) = 0
+LOAD 5
+ADD 4
+STORE 5		# j = j+i
+JUMP 45		# end while
+LOAD 4
+INC
+STORE 4		# i = i+1
+LOAD 7		# i'
+JUMP 33		# end for
+HALT
+
