@@ -1872,7 +1872,7 @@ yyreturn:
 
 
 void yyerror(std::string err){
-  std::cerr << "\033[1;31m[ERROR] " << inputName <<"\033[0m \t \033[1;30m[LINE:" << yylineno << "]\033[0m\t" << err << std::endl;
+  std::cerr << "\033[1;31m[ERROR] " << inputName <<"\033[0m \033[1;34m[LINE:" << yylineno << "]\033[0m\t" << err << std::endl;
 }
 
 int main(int argc, char** argv) {
