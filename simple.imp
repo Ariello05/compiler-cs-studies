@@ -1,0 +1,7 @@
+DECLARE 
+	a
+BEGIN
+	a ASSIGN 10;
+	a ASSIGN 0 TIMES a;
+	WRITE a;
+END 

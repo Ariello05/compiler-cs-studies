@@ -82,6 +82,7 @@ public:
     void decDepth();
 
 private:
+    bool alreadyInAC(unsigned long long index);
     bool divSwitch(SmartBlock first, SmartBlock second, unsigned long long old_b, unsigned long long one, unsigned long long two);
     void loadArrayVar(unsigned long long arrayIndex, unsigned long long varIndex);//Load value of array at variable
     void defineValueUnsinged(unsigned long long value);

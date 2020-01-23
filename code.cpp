@@ -84,8 +84,15 @@ void Coder::addVars(){
                 }break;
 
                 case VARIABLE:{// a + b
-                    vm.push_back("LOAD " + std::to_string(first.variableIndex));
-                    vm.push_back("ADD " + std::to_string(second.variableIndex));
+                    if(alreadyInAC(first.variableIndex)){
+                        vm.push_back("ADD " + std::to_string(second.variableIndex));
+                    }
+                    else if(alreadyInAC(second.variableIndex)){
+                        vm.push_back("ADD " + std::to_string(first.variableIndex));
+                    }else{
+                        vm.push_back("LOAD " + std::to_string(first.variableIndex));
+                        vm.push_back("ADD " + std::to_string(second.variableIndex));
+                    }
                 }break;
 
                 case ARRAYVAR:{// a + t(a)
@@ -170,8 +177,20 @@ void Coder::subVars(){
         case VARIABLE:{
             switch(second.type){
                 case CONSTVALUE:{// a - 1
-                    if(second.value == 0){
+                    if(second.value < 10 && second.value >= 0){
                         vm.push_back("LOAD " + std::to_string(first.variableIndex));
+                        for(auto i = 0; i < second.value; ++i){
+                            vm.push_back("DEC");
+                        }
+                        return;
+
+                    }
+                    
+                    if(second.value > -10 && second.value < 0){
+                        vm.push_back("LOAD " + std::to_string(first.variableIndex));
+                        for(auto i = 0; i >= second.value; --i){
+                            vm.push_back("INC");
+                        }
                         return;
                     }
                     auto id = mc->declareValue(second.value);
@@ -182,8 +201,17 @@ void Coder::subVars(){
                 }break;
 
                 case VARIABLE:{// a - b
-                    vm.push_back("LOAD " + std::to_string(first.variableIndex));
-                    vm.push_back("SUB " + std::to_string(second.variableIndex));
+                    if(first.variableIndex == second.variableIndex){
+                        vm.push_back("SUB 0");
+                        return;
+                    }
+
+                    if(alreadyInAC(first.variableIndex)){
+                        vm.push_back("SUB " + std::to_string(second.variableIndex));
+                    }else{
+                        vm.push_back("LOAD " + std::to_string(first.variableIndex));
+                        vm.push_back("SUB " + std::to_string(second.variableIndex));
+                    }
                 }break;
 
                 case ARRAYVAR:{// a - t(a)
@@ -235,6 +263,8 @@ void Coder::mulVars(){
 
     unsigned long long one = mc->smartGetSpecialIndex(mc->primary);
     unsigned long long two = mc->smartGetSpecialIndex(mc->secondary);
+    auto div = mc->getIndexOfValue(-1,MTYPE::CONST);
+    auto mul = mc->getIndexOfValue(1,MTYPE::CONST);
     auto third = mc->smartGetSpecialIndex(".AddStack");//ADDING STACK
     vm.push_back("SUB 0");
     vm.push_back("STORE " + std::to_string(third));
@@ -259,6 +289,14 @@ void Coder::mulVars(){
 
                 case VARIABLE:{// 1 * a
                     //two = mc->smartGetSpecialIndex(mc->primary);
+                    if(first.value == 2){
+                        vm.pop_back();vm.pop_back();
+                        if(!alreadyInAC(second.variableIndex))
+                            vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                        
+                        vm.push_back("SHIFT " + std::to_string(mul));
+                        return;
+                    }
                     vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(two)); 
 
@@ -289,6 +327,14 @@ void Coder::mulVars(){
         case VARIABLE:{
             switch(second.type){
                 case CONSTVALUE:{// a * 1
+                    if(second.value == 2){
+                        vm.pop_back();vm.pop_back();
+                        if(!alreadyInAC(first.variableIndex))
+                            vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
+                        vm.push_back("SHIFT " + std::to_string(mul));
+                        return;
+                    }
+
                     auto ctwo = mc->declareValue(second.value);
                     defineValue(second.value);
                     vm.push_back("STORE " + std::to_string(ctwo));
@@ -367,9 +413,17 @@ void Coder::mulVars(){
     }    
     
     //one - left, two - right, one in AC
-    auto div = mc->getIndexOfValue(-1,MTYPE::CONST);
-    auto mul = mc->getIndexOfValue(1,MTYPE::CONST);
+    auto swap = mc->smartGetSpecialIndex(".Flag");
+    vm.push_back("SUB " + std::to_string(two));
+    vm.push_back("JNEG " + std::to_string(vm.size()+7));
+    vm.push_back("LOAD " + std::to_string(one));
+    vm.push_back("STORE " + std::to_string(swap));
+    vm.push_back("LOAD " + std::to_string(two));
+    vm.push_back("STORE " + std::to_string(one));
+    vm.push_back("LOAD " + std::to_string(swap));
+    vm.push_back("STORE " + std::to_string(two));
 
+    vm.push_back("LOAD " + std::to_string(one));
     vm.push_back("JZERO ");
     auto endJump = vm.size()-1;
     vm.push_back("JPOS " + std::to_string(vm.size()+7));
@@ -467,7 +521,9 @@ void Coder::divVars(){
 
                 case VARIABLE:{// 1 / a
                     //two = mc->smartGetSpecialIndex(mc->primary);
-                    vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    if(!alreadyInAC(second.variableIndex)){
+                        vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    }
                     vm.push_back("STORE " + std::to_string(two)); 
                     vm.push_back("STORE " + std::to_string(ogTwo));
 
@@ -500,7 +556,9 @@ void Coder::divVars(){
                 case CONSTVALUE:{// a / 2
                     if(second.value == 2){
                         vm.pop_back();vm.pop_back();
-                        vm.push_back("LOAD " + std::to_string(first.variableIndex));
+                        if(!alreadyInAC(first.variableIndex)){
+                            vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
+                        }
                         vm.push_back("SHIFT " + std::to_string(mc->getIndexOfValue(-1)));
                         return;
                     }
@@ -516,14 +574,23 @@ void Coder::divVars(){
                 }break;
 
                 case VARIABLE:{// a / b
+                    if(first.variableIndex == second.variableIndex){
+                        vm.pop_back();vm.pop_back();vm.pop_back();
+                        vm.push_back("SUB 0");
+                        vm.push_back("INC");
+                        return;
+                    }
+
                     //two = mc->smartGetSpecialIndex(mc->secondary);
-                    vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    if(!alreadyInAC(second.variableIndex)){
+                        vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    }
                     vm.push_back("STORE " + std::to_string(two)); 
                     vm.push_back("STORE " + std::to_string(ogTwo));
 
                     //one = mc->smartGetSpecialIndex(mc->primary);
-                    if(first.variableIndex != second.variableIndex)
-                        vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
+                        
+                    vm.push_back("LOAD " + std::to_string(first.variableIndex)); 
                     vm.push_back("STORE " + std::to_string(one)); // a in AC
 
                 }break;
@@ -563,7 +630,9 @@ void Coder::divVars(){
 
                 case VARIABLE:{// t(a) * b
                     //two = mc->smartGetSpecialIndex(mc->secondary);
-                    vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    if(!alreadyInAC(second.variableIndex)){
+                        vm.push_back("LOAD " + std::to_string(second.variableIndex)); 
+                    }
                     vm.push_back("STORE " + std::to_string(two)); 
                     vm.push_back("STORE " + std::to_string(ogTwo));
 
@@ -589,6 +658,7 @@ void Coder::divVars(){
     //one - left, two - right
     auto div = mc->getIndexOfValue(-1,MTYPE::CONST);
     auto mul = mc->getIndexOfValue(1,MTYPE::CONST);
+    auto mul2 = mc->getIndexOfValue(2,MTYPE::CONST);
     auto flag = mc->smartGetSpecialIndex(".Flag");
 
     vm.push_back("LOAD " + std::to_string(two));
@@ -644,11 +714,11 @@ void Coder::divVars(){
     vm.push_back("STORE " + std::to_string(counter));// ++i
     
     vm.push_back("LOAD " + std::to_string(counter));
-    vm.push_back("SHIFT " + std::to_string(mul));// i*2;
+    vm.push_back("SHIFT " + std::to_string(mul2));// i*2;
     vm.push_back("STORE " + std::to_string(counter));//i = i*2;
 
     vm.push_back("LOAD " + std::to_string(two));// AC = b
-    vm.push_back("SHIFT " + std::to_string(mul));
+    vm.push_back("SHIFT " + std::to_string(mul2));
     vm.push_back("STORE " + std::to_string(two));// b = b*2
 
     vm.push_back("SUB " + std::to_string(one));// b - a
@@ -657,6 +727,16 @@ void Coder::divVars(){
     vm.push_back("LOAD " + std::to_string(two));// AC = b
     vm.push_back("SHIFT " + std::to_string(div));// AC = b/2
     vm.push_back("STORE " + std::to_string(two));// b = b/2
+
+    vm.push_back("SUB " + std::to_string(one));// b - a
+    vm.push_back("JNEG " + std::to_string(vm.size()+7));// if a < b 
+
+    vm.push_back("LOAD " + std::to_string(two));//  REPEAT ONCE
+    vm.push_back("SHIFT " + std::to_string(div));// 
+    vm.push_back("STORE " + std::to_string(two));//
+    vm.push_back("LOAD " + std::to_string(counter));//
+    vm.push_back("SHIFT " + std::to_string(div));//
+    vm.push_back("STORE " + std::to_string(counter));//
 
     vm.push_back("LOAD " + std::to_string(one));
     vm.push_back("SUB " + std::to_string(two));
@@ -727,6 +807,7 @@ void Coder::modVars(){
     //one - left, two - right
     auto div = mc->getIndexOfValue(-1,MTYPE::CONST);
     auto mul = mc->getIndexOfValue(1,MTYPE::CONST);
+    auto mul2 = mc->getIndexOfValue(2,MTYPE::CONST);
 
     vm.push_back("JZERO " + std::to_string(vm.size() + 2));
     vm.push_back("JUMP " + std::to_string(vm.size() + 2));
@@ -779,11 +860,17 @@ void Coder::modVars(){
     vm.push_back("JNEG ");//jump to end
 
     vm.push_back("LOAD " + std::to_string(two));// AC = b
-    vm.push_back("SHIFT " + std::to_string(mul));
+    vm.push_back("SHIFT " + std::to_string(mul2));
     vm.push_back("STORE " + std::to_string(two));// b = b*2
 
     vm.push_back("SUB " + std::to_string(one));// b - a
     vm.push_back("JNEG " + std::to_string(vm.size()-4));// if a > b repeat
+
+    vm.push_back("LOAD " + std::to_string(two));// AC = b
+    vm.push_back("SHIFT " + std::to_string(div));// AC = b/2
+    vm.push_back("STORE " + std::to_string(two));// b = b/2
+    vm.push_back("SUB " + std::to_string(one));// b - a
+    vm.push_back("JNEG " + std::to_string(vm.size()+4));// if a < b 
 
     vm.push_back("LOAD " + std::to_string(two));// AC = b
     vm.push_back("SHIFT " + std::to_string(div));// AC = b/2
@@ -915,7 +1002,9 @@ void Coder::getValue(){
         }break;
 
         case VARIABLE:{
-            vm.push_back("LOAD " + std::to_string(item.variableIndex));
+            if(!alreadyInAC(item.variableIndex)){
+                vm.push_back("LOAD " + std::to_string(item.variableIndex)); 
+            }
             //auto value = mc->getValueOfIndex(item.variableIndex);//TODO: check if value is defined
             //mc->setValueIn(item.variableIndex,0);
         }break;
@@ -1181,17 +1270,26 @@ void Coder::handleToFor(string iterator){
                     flc.setForLoopBlock(forLoopBlock);
 
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
+                    if(alreadyInAC(second.variableIndex)){
+                        vm.push_back("STORE " + std::to_string(endValueIndex)); 
+                        defineValue(first.value);
+                        vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));
+                        jumps.push(vm.size());//BEFORE COMPARISON
+                        vm.push_back("SUB " + std::to_string(endValueIndex));
+                        jumps.push(vm.size());//WHERE TO END?
+                        vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER    
+                    }else{
+                        defineValue(first.value);
+                        vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));
+                        vm.push_back("LOAD " + std::to_string(second.variableIndex));
+                        vm.push_back("STORE " + std::to_string(endValueIndex));
+                        vm.push_back("LOAD " + std::to_string(forLoopBlock.getIteratorIndex())); 
+                        jumps.push(vm.size());//BEFORE COMPARISON
+                        vm.push_back("SUB " + std::to_string(endValueIndex));
+                        jumps.push(vm.size());//WHERE TO END?
+                        vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER                          
+                    }
 
-                    defineValue(first.value);
-                    vm.push_back("STORE " +std::to_string(forLoopBlock.getIteratorIndex()));
-                    vm.push_back("LOAD " + std::to_string(second.variableIndex));
-                    vm.push_back("STORE " + std::to_string(endValueIndex));
-
-		    vm.push_back("LOAD " + std::to_string(forLoopBlock.getIteratorIndex())); 
-                    jumps.push(vm.size());//BEFORE COMPARISON
-                    vm.push_back("SUB " + std::to_string(endValueIndex));
-                    jumps.push(vm.size());//WHERE TO END?
-                    vm.push_back("JPOS ");    //TODO: STACK FOR JUMP INDEXER  
                 }
                 break;
 
@@ -1234,7 +1332,8 @@ void Coder::handleToFor(string iterator){
                     auto forBlock = mc->pushIterator(iterator,true,true);
                     auto iteratorIndex = forBlock.getIteratorIndex();
                     auto endIndex = forBlock.getSpecialIndex();
-                    vm.push_back("LOAD " +std::to_string(second.variableIndex));//load variable
+                    if(!alreadyInAC(second.variableIndex))
+                        vm.push_back("LOAD " +std::to_string(second.variableIndex));//load variable
                     vm.push_back("STORE " +std::to_string(endIndex));//store to end value
                     vm.push_back("LOAD " +std::to_string(first.variableIndex));//load variable
                     vm.push_back("STORE " +std::to_string(iteratorIndex));//store to iterator
@@ -1351,7 +1450,7 @@ void Coder::handleDownToFor(string iterator){
                     vm.push_back("LOAD " + std::to_string(second.variableIndex));
                     vm.push_back("STORE " + std::to_string(endValueIndex));
 	
-		    vm.push_back("LOAD " + std::to_string(forLoopBlock.getIteratorIndex()));
+		            vm.push_back("LOAD " + std::to_string(forLoopBlock.getIteratorIndex()));
                     jumps.push(vm.size());//BEFORE COMPARISON
                     vm.push_back("SUB " + std::to_string(endValueIndex));
                     jumps.push(vm.size());//WHERE TO END?
@@ -1483,7 +1582,9 @@ void Coder::endFor(bool dec){
     auto indexToChange = jumps.top(); jumps.pop();
     auto comparisonJump = jumps.top(); jumps.pop();
     auto iterator = mc->popIterator();
-    vm.push_back("LOAD " + std::to_string(iterator));
+    if(!alreadyInAC(iterator))
+        vm.push_back("LOAD " + std::to_string(iterator));
+
     if(dec) vm.push_back("DEC");
     else vm.push_back("INC");
     vm.push_back("STORE " + std::to_string(iterator));
@@ -1541,7 +1642,7 @@ void Coder::write(){
         }break;
 
         case VARIABLE:{
-            if(vm.back() != "STORE " + std::to_string(item.variableIndex))
+            if(!alreadyInAC(item.variableIndex))
                 vm.push_back("LOAD " + std::to_string(item.variableIndex));
         }break;
 
@@ -1925,3 +2026,53 @@ void Coder::incDepth(){
 void Coder::decDepth(){
     --loopDepth;
 }
+//JPOS
+//JNEG
+//JUMP
+//ADD
+//SUB
+//INC
+//DEC
+//STOREI
+//LOADI
+//STORE
+//LOAD
+//GET
+//PUT
+//SHIFT
+
+bool contains(string searched, string tosearch){
+    auto e = searched.find(tosearch);
+    if(e == std::string::npos) return false;
+    else return true;
+}
+
+bool Coder::alreadyInAC(unsigned long long index){
+    auto last = vm.back();
+    //std::cerr<< last << std::endl;
+
+    if(contains(last, "STORE")){
+        if(contains(last, "STOREI")){
+            return false;
+        }
+
+        if(last == "STORE " + std::to_string(index)){
+            //std::cerr<< "OPT!" << std::endl;
+
+            return true;
+        }else{
+            vm.pop_back();
+            auto res = alreadyInAC(index);
+            vm.push_back(last);
+            return res;
+        }
+    }else if(last == "LOAD " + std::to_string(index)){
+        //std::cerr<< "OPT!" << std::endl;
+
+        return true;
+    }else{
+        return false;
+    }
+    
+}
+
