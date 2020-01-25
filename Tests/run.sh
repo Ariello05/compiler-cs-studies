@@ -15,7 +15,13 @@ printf 'program0.mr\t';           ./maszyna-wirtualna-cln program0.mr <<< '13456
 printf 'program1.mr\t';           ./maszyna-wirtualna-cln program1.mr 
 printf 'program2.mr\t';           ./maszyna-wirtualna-cln program2.mr <<< '12345678901'
 printf 'program2.mr\t';           ./maszyna-wirtualna-cln program2.mr <<< '12345678903'
-printf 'program3.mr\t';           ./maszyna-wirtualna-cln program3.mr 
+printf 'test0.mr\t';		./maszyna-wirtualna-cln test0.mr <<< '0 0 0 0 0 0 0 0'
+printf 'test1a.mr\t';		./maszyna-wirtualna-cln test1a.mr <<< '10'
+printf 'test1b.mr\t';		./maszyna-wirtualna-cln test1b.mr <<< '10'
+printf 'test1c.mr\t';		./maszyna-wirtualna-cln test1c.mr <<< '10'
+printf 'test1d.mr\t';		./maszyna-wirtualna-cln test1d.mr <<< '10'
+printf 'test2.mr\t';		./maszyna-wirtualna-cln test2.mr
+printf 'program3.mr\t';             ./maszyna-wirtualna-cln    program3.mr
 printf 'program4.mr\t';             ./maszyna-wirtualna-cln    program4.mr
 printf 'program5.mr\t';             ./maszyna-wirtualna-cln    program5.mr
 printf 'program6.mr\t';             ./maszyna-wirtualna-cln    program6.mr
@@ -27,10 +33,3 @@ printf 'program11.mr\t';             ./maszyna-wirtualna-cln    program11.mr
 printf 'program12.mr\t';             ./maszyna-wirtualna-cln    program12.mr
 printf 'program13.mr\t';             ./maszyna-wirtualna-cln    program13.mr
 printf 'program14.mr\t';             ./maszyna-wirtualna-cln    program14.mr
-printf 'test0.mr\t';		./maszyna-wirtualna-cln test0.mr <<< '0 0 0 0 0 0 0 0'
-printf 'test1a.mr\t';		./maszyna-wirtualna-cln test1a.mr <<< '10'
-printf 'test1b.mr\t';		./maszyna-wirtualna-cln test1b.mr <<< '10'
-printf 'test1c.mr\t';		./maszyna-wirtualna-cln test1c.mr <<< '10'
-printf 'test1d.mr\t';		./maszyna-wirtualna-cln test1d.mr <<< '10'
-printf 'test2.mr\t';		./maszyna-wirtualna-cln test2.mr
-#scan

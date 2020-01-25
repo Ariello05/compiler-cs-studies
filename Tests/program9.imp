@@ -3,7 +3,7 @@ DECLARE
 	n, _r, r_, j, k, ta(0:24), tb(-24:0), tc(-12:12)
 BEGIN
 	n ASSIGN 25 MINUS 1;     [       n = 24  ]
-    _r ASSIGN n DIV -2;      [      _r = -12 ]
+	_r ASSIGN n DIV -2;      [      _r = -12 ]
     r_ ASSIGN _r DIV -1;     [      r_ = 12  ]
 	tc(_r) ASSIGN n;         [  tc(_r) = 24  ]
 	tc(r_) ASSIGN n MINUS n; [  tc(r_) = 0   ] 

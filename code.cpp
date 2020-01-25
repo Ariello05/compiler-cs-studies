@@ -146,11 +146,11 @@ void Coder::subVars(){
                         vm.push_back("SUB 0");
                         return;
                     }
-                    auto id = mc->declareValue(first.value);
-                    defineValue(first.value);
+                    auto id = mc->declareValue(second.value);
+                    defineValue(second.value);
                     vm.push_back("STORE " + std::to_string(id));
                     //mc->declareValue(second.value); TODO: we actully might want to declare space for it
-                    defineValue(second.value);
+                    defineValue(first.value);
                     vm.push_back("SUB " + std::to_string(id));
                 }
                 break;
@@ -187,7 +187,7 @@ void Coder::subVars(){
                     
                     if(second.value > -10 && second.value < 0){
                         vm.push_back("LOAD " + std::to_string(first.variableIndex));
-                        for(auto i = 0; i >= second.value; --i){
+                        for(auto i = 0; i > second.value; --i){
                             vm.push_back("INC");
                         }
                         return;
