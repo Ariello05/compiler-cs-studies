@@ -1,0 +1,16 @@
+[ errorf1.imp - niezainicjalizowana zmienna w zakresie petli ]
+DECLARE
+	a, b, c
+BEGIN
+	a ASSIGN 1;
+
+	FOR i FROM a DOWNTO b DO
+		c ASSIGN a PLUS i;
+		a ASSIGN a TIMES 7;
+	ENDFOR
+
+	WRITE a;
+	WRITE c;
+
+END
+

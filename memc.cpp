@@ -306,6 +306,9 @@ unsigned long long MemoryController::getIndexOfValue(long long value, MTYPE type
 unsigned long long MemoryController::getIndexOfVar(string name){
     auto var = variables.find(name);
     if(var == variables.end()){
+        if(arrays.find(name) != arrays.end()){
+            throw std::runtime_error("Wrong usage of array: " + name);
+        }
         throw std::runtime_error("Accesing undeclared variable: " + name);
     }
     return var->second;
@@ -314,10 +317,20 @@ unsigned long long MemoryController::getIndexOfVar(string name){
 unsigned long long MemoryController::getIndexOfArrayElement(string name, unsigned long long element){
     auto res = arrays.find(name);
     if(res == arrays.end()){
+        if(variables.find(name) != variables.end()){
+            throw std::runtime_error("Wrong usage of variable: " + name); 
+        }   
         throw std::runtime_error("Accesing undeclared array: " + name);
     }
     auto index = res->second.getMemBlockIndex(element);
-    blocks.insert(std::make_pair(index,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(element) + ")"))));//WE HOLD VARIABLE AT SOME INDEX
+    if(blocks.find(index) == blocks.end()){
+        
+        if(res->second.panic){
+            blocks.insert(std::make_pair(index,std::make_shared<MemBlock>(MemBlock(0,MTYPE::ARRAY, name + "(" + std::to_string(element) + ")"))));//WE HOLD VARIABLE AT SOME INDEX
+        }else{
+            blocks.insert(std::make_pair(index,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(element) + ")"))));//WE HOLD VARIABLE AT SOME INDEX
+        }
+    }
     return index;
 }
 unsigned long long MemoryController::getIndexOfSpecial(string name){
@@ -381,6 +394,7 @@ void MemoryController::clearFlagsInArray(unsigned long long start){
             if(arr.panic){
                 return;
             }
+            begin->second.panic = true;
             auto last = arr.getLastOffsetedIndex();
             for(auto i = start+arr.getBegin(); i <= last; ++i){//TODO: ?
                 try{setValueIn(i,0);}catch(...){continue;}
@@ -400,6 +414,7 @@ void MemoryController::clearFlagsInArray(string name){
     if(item->second.panic){
         return;
     }
+    item->second.panic = true;
     auto start = item->second.getFirstOffsetedIndex();
     auto last = item->second.getLastOffsetedIndex();
     for(auto i = start; i <= last; ++i){

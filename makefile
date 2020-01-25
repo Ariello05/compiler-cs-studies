@@ -8,13 +8,13 @@ memc.o: memc.cpp
 code.o: code.cpp
 		g++ -std=c++17 --pedantic -Wall -c code.cpp
 
-forController.o: forController.cpp
-		g++ -std=c++17 --pedantic -Wall -c forController.cpp
+loopController.o: loopController.cpp
+		g++ -std=c++17 --pedantic -Wall -c loopController.cpp
 
-scan: parser.ypp lexer.l memc.o code.o forController.o
+scan: parser.ypp lexer.l memc.o code.o loopController.o
 		bison -o parser_y.c -d parser.ypp
 		flex -o lexer_l.c lexer.l 
-		g++ -std=c++17 --pedantic -Wall -O -lm -o scan parser_y.c lexer_l.c memc.o code.o forController.o
+		g++ -std=c++17 --pedantic -Wall -O -lm -o scan parser_y.c lexer_l.c memc.o code.o loopController.o
  
 clean: 
 		rm -f *.c *.h *.o

@@ -1,0 +1,51 @@
+[ program11.imp ]
+DECLARE
+	a, aa, b, c, d, e, f, g
+BEGIN
+	READ a;
+	READ aa;
+	READ b;
+    g ASSIGN 1111111111;	
+    c ASSIGN a MINUS -10;
+	d ASSIGN b PLUS -5;
+    g ASSIGN g DIV -1;	
+    e ASSIGN 1;
+	f ASSIGN d PLUS e;
+    g ASSIGN g TIMES -1; 	 
+
+	WRITE g;
+	WRITE a;
+	WRITE aa;
+	WRITE b;
+	WRITE c;
+	WRITE d;
+	WRITE e;
+	WRITE f;
+	WRITE g;
+
+	IF a GE b THEN
+		e ASSIGN a PLUS c;
+		IF a GE aa THEN
+			f ASSIGN e TIMES aa;
+		ELSE
+			f ASSIGN e TIMES a;
+		ENDIF
+	ELSE
+		e ASSIGN b PLUS c;
+		IF aa GE a THEN
+			f ASSIGN e DIV a;
+		ELSE
+			f ASSIGN e DIV aa;
+		ENDIF
+	ENDIF
+
+	WRITE a;
+	WRITE aa;
+	WRITE b;
+	WRITE c;
+	WRITE d;
+	WRITE e;
+	WRITE f;
+
+END
+

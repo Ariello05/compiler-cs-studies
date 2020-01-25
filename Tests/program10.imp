@@ -1,0 +1,50 @@
+[ program10.imp ]
+DECLARE
+	_, a[1:2], b[3], c, t(0:6), d, e, f[a], g[b:c], h, [1:2]i, [4]j, tab(-5:0)[1:2], __, _d
+BEGIN
+	WRITE 0;
+	WRITE -1;
+	WRITE 2;
+	WRITE -10;
+	WRITE 100;
+	WRITE -10000;
+	WRITE 1234567890;
+
+	a ASSIGN -1234566543;
+	b ASSIGN 677777177;
+	c ASSIGN 15;
+	t(2) ASSIGN 555555555;
+	d ASSIGN 8888;
+	tab(-4) ASSIGN 11;
+	t(0) ASSIGN 999;
+	e ASSIGN 1111111111;
+	tab(0) ASSIGN 7777;
+	f ASSIGN 2048;
+	g ASSIGN 123;
+	t(3) ASSIGN t(0);
+	tab(-5) ASSIGN a;
+	tab(-5) ASSIGN tab(0) DIV tab(-4);
+	t(5) ASSIGN tab(0);
+    _ ASSIGN -123456;
+    __ ASSIGN -3;
+    _d ASSIGN _ DIV __;
+
+	READ h;
+	i ASSIGN 1;
+	j ASSIGN h[0] PLUS c[i];
+	
+	WRITE j;
+	WRITE c[555];
+	WRITE t(3);
+	WRITE t(2);
+	WRITE t(5);
+	WRITE t(0);
+	WRITE tab(-4);
+	WRITE tab(-5);
+	WRITE tab(0);
+    WRITE _;
+	WRITE __;
+    WRITE _d;
+
+END
+

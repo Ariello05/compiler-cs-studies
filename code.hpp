@@ -5,7 +5,7 @@
 #include <stack>
 #include "memc.hpp"
 #include <fstream>
-#include "forController.hpp"
+#include "loopController.hpp"
 #include "structs.hpp"
 
 using std::string;
@@ -92,13 +92,13 @@ private:
 
     bool forward;
     string filename;
+    string ignore;
 
     std::vector<string> vm;
     std::shared_ptr<MemoryController> mc;
     std::stack<SmartBlock> args;
-    ForLoopController flc;
+    LoopController lc;
     //std::stack<long long> loopJumps;
     std::stack<long long> jumps;
-    long long loopDepth;
 
 };

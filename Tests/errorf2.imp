@@ -1,0 +1,15 @@
+[ errorf2.imp - uzycie zmiennej globalnej 
+  o tej samej nazwie co iterator w zakresie petli ]
+DECLARE
+	c, i
+BEGIN
+	i ASSIGN 100;
+	c ASSIGN 0;
+	FOR i FROM 1 TO i DO
+		c ASSIGN c PLUS i;
+	ENDFOR
+
+	WRITE c;
+
+END
+

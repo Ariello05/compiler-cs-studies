@@ -15,15 +15,18 @@ printf 'program0.mr\t';           ./maszyna-wirtualna-cln program0.mr <<< '13456
 printf 'program1.mr\t';           ./maszyna-wirtualna-cln program1.mr 
 printf 'program2.mr\t';           ./maszyna-wirtualna-cln program2.mr <<< '12345678901'
 printf 'program2.mr\t';           ./maszyna-wirtualna-cln program2.mr <<< '12345678903'
-printf 'error0.mr\t';             ./maszyna-wirtualna-cln error0.mr
-printf 'error1.mr\t';             ./maszyna-wirtualna-cln error1.mr
-printf 'error2.mr\t';             ./maszyna-wirtualna-cln error2.mr
-printf 'error3.mr\t';             ./maszyna-wirtualna-cln error3.mr
-printf 'error4.mr\t';             ./maszyna-wirtualna-cln error4.mr
-printf 'error5.mr\t';             ./maszyna-wirtualna-cln error5.mr
-printf 'error6.mr\t';             ./maszyna-wirtualna-cln error6.mr
-printf 'error7.mr\t';             ./maszyna-wirtualna-cln error7.mr
-printf 'error8.mr\t';             ./maszyna-wirtualna-cln error8.mr
+printf 'program3.mr\t';           ./maszyna-wirtualna-cln program3.mr 
+printf 'program4.mr\t';             ./maszyna-wirtualna-cln    program4.mr
+printf 'program5.mr\t';             ./maszyna-wirtualna-cln    program5.mr
+printf 'program6.mr\t';             ./maszyna-wirtualna-cln    program6.mr
+printf 'program7.mr\t';             ./maszyna-wirtualna-cln    program7.mr
+printf 'program8.mr\t';             ./maszyna-wirtualna-cln    program8.mr
+printf 'program9.mr\t';             ./maszyna-wirtualna-cln    program9.mr
+printf 'program10.mr\t';             ./maszyna-wirtualna-cln    program10.mr
+printf 'program11.mr\t';             ./maszyna-wirtualna-cln    program11.mr
+printf 'program12.mr\t';             ./maszyna-wirtualna-cln    program12.mr
+printf 'program13.mr\t';             ./maszyna-wirtualna-cln    program13.mr
+printf 'program14.mr\t';             ./maszyna-wirtualna-cln    program14.mr
 printf 'test0.mr\t';		./maszyna-wirtualna-cln test0.mr <<< '0 0 0 0 0 0 0 0'
 printf 'test1a.mr\t';		./maszyna-wirtualna-cln test1a.mr <<< '10'
 printf 'test1b.mr\t';		./maszyna-wirtualna-cln test1b.mr <<< '10'

@@ -19,9 +19,10 @@ std::shared_ptr<Coder> code = std::make_shared<Coder>(vars);
 
 bool declareError = false;
 string inputName;
+string outputName;
 
 %}
-
+%define parse.error verbose
 %union {
   std::string * str;
   long long number;
@@ -60,11 +61,11 @@ program:        DECLARE declarations BEGINA { if(declareError){YYABORT;
                 commands END {
                    
                    //vars->printAll();
-                   std::cerr << "\033[1;32m[SUCCESS] " << inputName <<"\033[0m \t" << std::endl;
+                   std::cerr << "\033[1;32m[SUCCESS] " << inputName <<", " << outputName <<"\033[0m \t" << std::endl;
                    code->end(); code->printVM();
                    }                                                   
                 |
-                BEGINA commands END { std::cerr << "\033[1;32m[SUCCESS] " << inputName <<"\033[0m \t" << std::endl;
+                BEGINA commands END { std::cerr << "\033[1;32m[SUCCESS] " << inputName <<", " << outputName <<"\033[0m \t" << std::endl;
                 code->end(); code->printVM(); }
 ;
 
@@ -126,31 +127,48 @@ command:        identifier ASSIGN expression ';'         { auto injectPoint = $3
                                                           }                                                       
 
                 
-                | IF
-                  condition THEN commands                                                             
+                | IF condition 
+                   THEN 
+                   commands                                                             
                   ELSE { code->startelse(); } 
                   commands 
                   ENDIF { code->endif(); }                                                                
 
-                | IF
-                 condition THEN commands 
-                ENDIF { code->endif(); }                                                 
+                | IF condition 
+                  THEN 
+                  commands 
+                  ENDIF { code->endif(); }                                                 
 
                 | WHILE condition DO {auto conditionIndex = $2;code->incDepth(); code->stackJump(conditionIndex);}
-                  commands ENDWHILE   {code->endWhile();code->decDepth();}                                  
+                  commands ENDWHILE   {code->endWhile();
+                  try{code->decDepth();
+                    }catch(std::runtime_error & err){
+                      yyerror(err.what());YYABORT;
+                  }}                                  
 
                 | DO                              {code->stackJump();code->incDepth();  }                                                                 
-                  commands WHILE condition ENDDO  {code->endDoWhile();code->decDepth();}                                      
+                  commands WHILE condition ENDDO  {code->endDoWhile();
+                  try{code->decDepth();
+                  }catch(std::runtime_error & err){
+                    yyerror(err.what());YYABORT;
+                  }}                                      
                                                                                         
-                | FOR pidentifier FROM value TO value DO      {auto pid = $2; try{code->handleToFor(*pid);code->incDepth();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
-                                                                }}                           
-                        commands 
-                  ENDFOR                                      {code->endFor(false);code->decDepth();}    
+                | FOR pidentifier FROM value TO value DO      
+                  {auto pid = $2; 
+                    try{code->handleToFor(*pid);code->incDepth();}
+                    catch(std::runtime_error & err){
+                    yyerror(err.what()); YYABORT;
+                    }
+                  }                           
+                  commands 
+                  ENDFOR                                      {try{code->endFor(false);code->decDepth();}
+                    catch(std::runtime_error & err){yyerror(err.what()); YYABORT;}}    
 
-                | FOR pidentifier FROM value DOWNTO value DO  {auto pid = $2; try{code->handleDownToFor(*pid);code->incDepth();}catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
-                                                              }}                              
-                        commands 
-                  ENDFOR                                      {code->endFor(true);code->decDepth();}                        
+                | FOR pidentifier FROM value DOWNTO value DO  {auto pid = $2; try{code->handleDownToFor(*pid);code->incDepth();}
+                    catch(std::runtime_error & err){yyerror(err.what()); YYABORT;}}                              
+                  commands 
+                  ENDFOR                                      {try{code->endFor(true);code->decDepth();}
+                    catch(std::runtime_error & err){yyerror(err.what()); YYABORT;}}                        
 
                 | READ identifier ';' { code->read(); }                                                     
 
@@ -181,13 +199,13 @@ value:          num                           { auto val = $1; code->stackValue(
 
 identifier:     pidentifier                           { auto pid = $1; try{code->stackVariable(*pid);}
                                                             catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
-                                                            } }    
+                                                      } }    
                 | pidentifier '(' pidentifier ')'     { auto pid = $3; auto name = $1; try{code->stackArrayWithVariable(*pid,*name);}
                                                             catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
-                                                            } }                                        
+                                                      } }                                        
                 | pidentifier '(' num ')'             { auto pid = $1; auto val = $3; try{code->stackArrayWithConst(val,*pid);}
                                                             catch(std::runtime_error & err){yyerror(err.what()); YYABORT;
-                                                            } }                                       
+                                                      } }                                       
 ;
 
 
@@ -203,6 +221,7 @@ int main(int argc, char** argv) {
     return 0;
   }
   inputName = argv[1];
+  outputName = argv[2];
 
   yyin = fopen(argv[1], "r"); 
   code->setOutput(argv[2]);

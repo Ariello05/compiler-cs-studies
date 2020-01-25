@@ -1,0 +1,16 @@
+[ program7.imp ]
+[ Czas wykonywania tego programu nie powinien istotnie roznic sie 
+ od czasu wykonywania factorial.imp /dla tych samych n/. ]
+DECLARE
+    fact, n 
+BEGIN
+	READ n;
+    fact ASSIGN 1;
+	FOR k FROM 1 TO n DO
+		fact ASSIGN k TIMES fact;
+	ENDFOR
+	WRITE fact;
+
+	[ Liczy n! ]
+END
+

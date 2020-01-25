@@ -1,0 +1,14 @@
+[ errorf3.imp - modyfikacja iteratora w petli ]
+DECLARE
+	c
+BEGIN
+	c ASSIGN 0;
+	FOR i FROM 1 TO 100 DO
+		c ASSIGN c PLUS i;
+		i ASSIGN i MOD 2;
+	ENDFOR
+
+	WRITE c;
+	
+END
+

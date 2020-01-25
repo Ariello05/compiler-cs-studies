@@ -1,0 +1,48 @@
+[ progrm14.imp - insertion sort ]
+DECLARE
+	tab(-21:0), x, q, w, j, k, n, m, mm
+BEGIN
+	n ASSIGN 23;
+	m ASSIGN n PLUS -2;
+    m ASSIGN m DIV -1;
+	q ASSIGN 5;
+	w ASSIGN 1;
+
+    [generowanie nieposortowanej tablicy]
+	FOR i FROM m TO 0 DO
+		w ASSIGN w TIMES q;
+		w ASSIGN w MOD n;
+		tab(i) ASSIGN w;
+	ENDFOR
+
+	[wypisywanie nieposortowanej tablicy]
+	FOR i FROM m TO 0 DO
+		WRITE tab(i);
+	ENDFOR
+
+	WRITE 1111111111;
+
+	[sortowanie]
+    mm ASSIGN m PLUS 1;
+	FOR i FROM mm TO 0 DO
+		x ASSIGN tab(i);
+		j ASSIGN i;
+		WHILE j GE m DO
+			k ASSIGN j MINUS 1;
+			IF tab(k) GE x THEN
+				tab(j) ASSIGN tab(k);
+				j ASSIGN j MINUS 1;
+			ELSE
+				k ASSIGN j;
+				j ASSIGN m;
+			ENDIF
+		ENDWHILE
+		tab(k) ASSIGN x;
+	ENDFOR
+
+	[wypisywanie posortowanej tablicy]
+	FOR i FROM m TO 0 DO
+		WRITE tab(i);
+	ENDFOR
+END
+

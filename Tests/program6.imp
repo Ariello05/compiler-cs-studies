@@ -1,0 +1,15 @@
+[ program6.imp ]
+DECLARE
+	fact, n 
+BEGIN
+	READ n;
+	fact ASSIGN 1;
+	FOR k FROM 1 TO n DO
+		fact ASSIGN fact TIMES k;
+	ENDFOR    
+    
+	WRITE fact;
+
+	[ Liczy n! ]
+END
+

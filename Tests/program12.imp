@@ -1,0 +1,79 @@
+[ program12.imp ]
+DECLARE
+	a, aa(0:6), b, c, d
+BEGIN
+	READ a;
+	READ b;
+	READ c;
+	READ d;
+
+	aa(0) ASSIGN a DIV 0;
+	aa(1) ASSIGN 0 DIV a;
+	aa(2) ASSIGN 0 DIV 0;
+	aa(3) ASSIGN a DIV 1;
+	aa(4) ASSIGN 1 DIV a;
+	aa(5) ASSIGN a DIV -1;
+	aa(6) ASSIGN -1 DIV a;
+	
+	WRITE aa(0);
+	WRITE aa(1);
+	WRITE aa(2);
+	WRITE aa(3);
+	WRITE aa(4);
+    WRITE aa(5);
+	WRITE aa(6);
+
+	WRITE 1111111111;
+
+	aa(0) ASSIGN a TIMES 0;
+	aa(1) ASSIGN 0 TIMES a;
+	aa(2) ASSIGN a TIMES 1;
+	aa(3) ASSIGN 1 TIMES a;
+	aa(4) ASSIGN a TIMES -1;
+	aa(5) ASSIGN -1 TIMES a;
+
+	WRITE aa(0);
+	WRITE aa(1);
+	WRITE aa(2);
+	WRITE aa(3);
+    WRITE aa(4);
+	WRITE aa(5);
+
+	WRITE 1111111111;
+
+	aa(0) ASSIGN a MOD 0;
+	aa(1) ASSIGN 0 MOD a;
+	aa(2) ASSIGN a MOD 1;
+	aa(3) ASSIGN 1 MOD a;
+	aa(4) ASSIGN a MOD -1;
+	aa(5) ASSIGN -1 MOD a;
+
+   	WRITE aa(0);
+	WRITE aa(1);
+	WRITE aa(2);
+	WRITE aa(3);
+    WRITE aa(4);
+	WRITE aa(5);
+
+	WRITE 1111111111;
+
+	aa(0) ASSIGN a PLUS 1;
+	aa(1) ASSIGN a PLUS -1;
+	aa(2) ASSIGN a MINUS 1;
+    aa(3) ASSIGN a MINUS -1;
+	aa(4) ASSIGN a MINUS a;
+	aa(5) ASSIGN a MINUS aa(0);
+	aa(6) ASSIGN aa(0) MINUS a;
+
+	WRITE aa(0);
+	WRITE aa(1);
+	WRITE aa(2);
+	WRITE aa(3);
+    WRITE aa(4);
+	WRITE aa(5);
+	WRITE aa(6);
+
+	WRITE 1111111111;
+
+END
+

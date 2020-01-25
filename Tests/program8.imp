@@ -1,0 +1,22 @@
+[ program8.imp ]
+DECLARE
+	a, b, c
+BEGIN
+	READ a;
+	READ b;
+	READ c;
+	FOR i FROM 9 DOWNTO 0 DO
+		FOR j FROM 0 TO i DO
+			FOR k FROM 0 TO j DO
+				a ASSIGN a PLUS k;
+				c ASSIGN k TIMES j;
+				c ASSIGN c PLUS i;
+				b ASSIGN b PLUS c;
+			ENDFOR
+		ENDFOR
+	ENDFOR
+	WRITE a;
+	WRITE b;
+	WRITE c;
+END
+

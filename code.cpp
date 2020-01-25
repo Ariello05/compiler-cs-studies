@@ -4,7 +4,6 @@
 
 Coder::Coder(std::shared_ptr<MemoryController> mc){
     this->mc = mc;
-    loopDepth = 0;
     auto a = mc->declareValue(1);
     auto b = mc->declareValue(2);
     auto c = mc->declareValue(3);
@@ -919,70 +918,76 @@ void Coder::modVars(){
 void Coder::processEQ(){
     auto right = args.top(); args.pop();
     auto left = args.top(); args.push(right);
-    flc.proccessCondition(left,CONDITION_TYPE::_EQ,right);
+    //lc.proccessCondition(left,CONDITION_TYPE::_EQ,right);
 
     subVars();//after this value is in AC
     auto before = vm.size();
     vm.push_back("JZERO " + std::to_string(before+2));
     vm.push_back("JUMP ");
     jumps.push(vm.size()-1);//we say that this needs to be updated later
+    lc.enterIf();
 }
 
 void Coder::processNEQ(){
     auto right = args.top(); args.pop();
     auto left = args.top(); args.push(right);
-    flc.proccessCondition(left,CONDITION_TYPE::_NEQ,right);
+    //lc.proccessCondition(left,CONDITION_TYPE::_NEQ,right);
 
     subVars();//after this value is in AC
     vm.push_back("JZERO ");
     auto before = vm.size();
     jumps.push(before-1);//we say that this needs to be updated later
+    lc.enterIf();
 }
 
 void Coder::processLE(){
     auto right = args.top(); args.pop();
     auto left = args.top(); args.push(right);
-    flc.proccessCondition(left,CONDITION_TYPE::_LE,right);
+    //lc.proccessCondition(left,CONDITION_TYPE::_LE,right);
 
     subVars();//after this value is in AC
     auto before = vm.size();
     vm.push_back("JNEG " + std::to_string(before+2));
     vm.push_back("JUMP ");
     jumps.push(vm.size()-1);//we say that this needs to be updated later
+    lc.enterIf();
 }
 
 void Coder::processGE(){
     auto right = args.top(); args.pop();
     auto left = args.top(); args.push(right);
-    flc.proccessCondition(left,CONDITION_TYPE::_GE,right);
+    //lc.proccessCondition(left,CONDITION_TYPE::_GE,right);
 
     subVars();//after this value is in AC
     auto before = vm.size();
     vm.push_back("JPOS " + std::to_string(before+2));
     vm.push_back("JUMP ");
     jumps.push(vm.size()-1);//we say that this needs to be updated later
+    lc.enterIf();
 }
 
 void Coder::processLEQ(){
     auto right = args.top(); args.pop();
     auto left = args.top(); args.push(right);
-    flc.proccessCondition(left,CONDITION_TYPE::_LEQ,right);
+    //lc.proccessCondition(left,CONDITION_TYPE::_LEQ,right);
 
     subVars();//after this value is in AC
     vm.push_back("JPOS ");
     auto before = vm.size();
     jumps.push(before-1);//we say that this needs to be updated later
+    lc.enterIf();
 }
 
 void Coder::processGEQ(){
     auto right = args.top(); args.pop();
     auto left = args.top(); args.push(right);
-    flc.proccessCondition(left,CONDITION_TYPE::_GEQ,right);
+    //lc.proccessCondition(left,CONDITION_TYPE::_GEQ,right);
 
     subVars();//after this value is in AC
     vm.push_back("JNEG ");
     auto before = vm.size();
     jumps.push(before-1);//we say that this needs to be updated later
+    lc.enterIf();
 }
 
 /**
@@ -1030,12 +1035,13 @@ void Coder::verifyStack(){
             //std::cerr<<std::to_string(val.variableIndex)<<"|\n";
 
             if(mc->isUndef(val.variableIndex)){
-                if(flc.inKnownFor()){
+                if(lc.isInIfMode()){
+                    ignore = val.name;
                     VarAccess va;
                     va.type = ACCESS_TYPE::CALL;
                     va.variableName = val.name;
                     va.variableIndex = val.variableIndex;
-                    flc.proccessAction(va);
+                    lc.proccessAction(va);
                 }else{
                     throw std::runtime_error("Undefined variable: " + val.name);
                 }
@@ -1084,7 +1090,6 @@ void Coder::stackArrayWithVariable(string var, string array){
 
 /* COMMAND BLOCK */
 void Coder::assignValueToVar(long long injectPoint){//value is in AC    
-    
 
     if(args.size() != 1){
         throw std::runtime_error("Invalid stack of args in assign");
@@ -1150,21 +1155,24 @@ void Coder::assignValueToVar(long long injectPoint){//value is in AC
                 throw std::runtime_error("Can't modify value of iterator");
             }
 
-            if(flc.inKnownFor()){
+            if(lc.isInIfMode() && ignore != block.name){
+
                 VarAccess va;
                 va.type = ACCESS_TYPE::ASSIGNMENT;
                 va.variableName = block.name;
                 va.variableIndex = block.variableIndex;
-                flc.proccessAction(va);
+                lc.proccessAction(va);
             }
 
             mc->setValueIn(0, 0);//update AC
             //std::cerr<< "updating: " << std::to_string(id) << std::endl;
             mc->setValueIn(id, 0);//update variable of index id
+
             vm.push_back("STORE " + std::to_string(id));//store to variable of inddex id
         }
         break;
     }
+    ignore = "";
 }
 
 void Coder::startif(){
@@ -1179,6 +1187,7 @@ void Coder::endif(){
     jumps.pop();
     auto current = vm.size();
     vm[lastjump] += std::to_string(current);
+    lc.finishIf();
 }
 
 
@@ -1200,12 +1209,12 @@ void Coder::startelse(){
  * Used mainly before condition in while loop 
 */ 
 void Coder::stackJump(){
-    flc.terminate();
+    //lc.terminate();
     jumps.push(vm.size()-1);//Stack jump
 }
 
 void Coder::stackJump(long long index){
-    flc.terminate();
+    //lc.terminate();
     jumps.push(index);//Stack jump
 }
 
@@ -1248,8 +1257,8 @@ void Coder::handleToFor(string iterator){
                         throw std::runtime_error("In FOR TO: Left variable can't be bigger than right");
                     }
                     auto forLoopBlock = mc->pushSimpleIterator(iterator,true);
-                    forLoopBlock.setKnownInfo(first.value);
-                    flc.setForLoopBlock(forLoopBlock);
+                    //forLoopBlock.setKnownInfo(first.value);
+                    //lc.setForLoopBlock(forLoopBlock);
 
                     auto endValueIndex = mc->declareValue(second.value);
                     defineValue(second.value);
@@ -1266,8 +1275,8 @@ void Coder::handleToFor(string iterator){
 
                 case VARIABLE:{// 1 TO a
                     auto forLoopBlock = mc->pushIterator(iterator,true,true);
-                    forLoopBlock.setKnownInfo(first.value);
-                    flc.setForLoopBlock(forLoopBlock);
+                    //forLoopBlock.setKnownInfo(first.value);
+                    //lc.setForLoopBlock(forLoopBlock);
 
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     if(alreadyInAC(second.variableIndex)){
@@ -1295,8 +1304,8 @@ void Coder::handleToFor(string iterator){
 
                 case ARRAYVAR:{// 1 TO t(a)
                     auto forLoopBlock = mc->pushIterator(iterator,true,true);
-                    forLoopBlock.setKnownInfo(first.value);
-                    flc.setForLoopBlock(forLoopBlock);
+                    //forLoopBlock.setKnownInfo(first.value);
+                    //lc.setForLoopBlock(forLoopBlock);
                     auto endValueIndex = forLoopBlock.getSpecialIndex();
                     
                     defineValue(first.value);
@@ -1577,7 +1586,7 @@ void Coder::handleDownToFor(string iterator){
 }
 
 void Coder::endFor(bool dec){
-    flc.finishForLoop();
+    lc.finishLoop();
 
     auto indexToChange = jumps.top(); jumps.pop();
     auto comparisonJump = jumps.top(); jumps.pop();
@@ -1610,12 +1619,12 @@ void Coder::read(){
             vm.push_back("STORE " + std::to_string(item.variableIndex));//TODO: Optimize somehow
             mc->setValueIn(item.variableIndex,0);//to clear undef flag
             mc->setValueIn(0,0);//to clear undef flag
-            if(flc.inKnownFor()){
+            if(lc.isInIfMode() && item.name != ignore){
                 VarAccess va;
                 va.type = ACCESS_TYPE::ASSIGNMENT;
                 va.variableName = item.name;
                 va.variableIndex = item.variableIndex;
-                flc.proccessAction(va);
+                lc.proccessAction(va);
             }
         }break;
 
@@ -1628,6 +1637,7 @@ void Coder::read(){
             vm.push_back("STOREI " + std::to_string(indexToStore));
         }break;
     }
+    ignore = "";
 }
 
 void Coder::write(){
@@ -2020,11 +2030,11 @@ void Coder::defineValue(std::vector<string> & storeCode, long long value){
 }
 
 void Coder::incDepth(){
-    ++loopDepth;
+    lc.enterLoop();
 }
 
 void Coder::decDepth(){
-    --loopDepth;
+    lc.finishLoop();
 }
 //JPOS
 //JNEG
