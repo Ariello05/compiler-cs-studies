@@ -38,7 +38,8 @@ public:
     }
 
     bool hasIndex(unsigned long long index){
-        if(index >= begin && index <= end){
+        
+        if(static_cast<long long>(index) >= begin && static_cast<long long>(index) <= end){
             return true;
         }else{
             return false;

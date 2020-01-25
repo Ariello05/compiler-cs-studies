@@ -51,6 +51,18 @@ void LoopController::enterIf(){
 void LoopController::finishIf(){
     if(loopDepth <= 1){
         ifMode = false;
+        
+        if(loopDepth == 0){
+        auto begin = defs.begin();
+        const auto end = defs.end();
+
+        while(begin != end){
+            if(begin->type == ACCESS_TYPE::CALL){
+                throw std::runtime_error("Undefined variable after if statement block, namely: " + begin->variableName);
+            }
+            ++begin;
+        }
+    }
     }
 }
 

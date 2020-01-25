@@ -1,8 +1,0 @@
-DECLARE
-    a,t(0:10)
-BEGIN
-    READ a;
-    t(a) ASSIGN 1;
-    WRITE t(1);
-END
-

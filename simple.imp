@@ -1,7 +1,0 @@
-DECLARE 
-	b, a(0:10)
-BEGIN
-	b ASSIGN 10;
-	a(0) ASSIGN 2 TIMES 2;
-	WRITE a(0);
-END 

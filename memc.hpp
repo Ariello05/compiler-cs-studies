@@ -26,11 +26,11 @@ public:
     unsigned long long declareValue(long long value);
     unsigned long long declareArray(string name, long long begin, long long end);
     unsigned long long declareSpecial(string name);
-    ForLoopBlock pushSimpleIterator(string name, bool for_to);
+    ForLoopBlock pushSimpleIterator(string name, bool for_to);//simplified iterator
     ForLoopBlock pushIterator(string name, bool isSpecial, bool for_to);
 
     unsigned long long popIterator();
-    unsigned long long smartGetSpecialIndex(string name);
+    unsigned long long smartGetSpecialIndex(string name);//gets index of special value, or createss new index if special value wasn't declared
 
     void setValueIn(string name, long long value);
     void setValueIn(unsigned long long index, long long value);
@@ -58,8 +58,8 @@ public:
     bool isIterator(unsigned long long index);
     Array & getArray(string name);
 
-    void clearFlagsInArray(unsigned long long start);
-    void clearFlagsInArray(string name);
+    void clearFlagsInArray(unsigned long long start);//puts panic mode
+    void clearFlagsInArray(string name);//puts panic mode
 
     MTYPE getTypeOfIndex(unsigned long long index);
     unsigned long long getFreeIndex();
@@ -70,16 +70,16 @@ public:
     const string primary = ".Local1";
     const string secondary = ".Local2";
 
-    void freeRestrict();
+    void freeRestrict();//helps with the problem of accessing yet undefined constants in certain cases
 
 private:
     //Most of the work is done in blocks which holds pairs index in memory - memblocks(VALUE)
     //variables and arrays map is only used as helper to faster identify correct indexes
-    std::map<unsigned long long, std::shared_ptr<MemBlock>> blocks;
-    std::map<string, unsigned long long> variables;
-    std::map<string, Array> arrays;
-    std::map<string, unsigned long long> specials;
-    std::vector<ForLoopBlock> iterators;
+    std::map<unsigned long long, std::shared_ptr<MemBlock>> blocks;//memblocks mapped by index
+    std::map<string, unsigned long long> variables;//variables, pair of name and index to memblock
+    std::map<string, Array> arrays;//holds arrayinfo
+    std::map<string, unsigned long long> specials;//specials are semi-const variables used in mul/div/mod or some other special cases
+    std::vector<ForLoopBlock> iterators;//forloopblock helper class
     unsigned long long indexer;
     unsigned long long restr = 0;
 };

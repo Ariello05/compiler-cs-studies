@@ -656,7 +656,7 @@ void Coder::divVars(){
     }        
     //one - left, two - right
     auto div = mc->getIndexOfValue(-1,MTYPE::CONST);
-    auto mul = mc->getIndexOfValue(1,MTYPE::CONST);
+    //auto mul = mc->getIndexOfValue(1,MTYPE::CONST);
     auto mul2 = mc->getIndexOfValue(2,MTYPE::CONST);
     auto flag = mc->smartGetSpecialIndex(".Flag");
 
@@ -805,7 +805,7 @@ void Coder::modVars(){
     
     //one - left, two - right
     auto div = mc->getIndexOfValue(-1,MTYPE::CONST);
-    auto mul = mc->getIndexOfValue(1,MTYPE::CONST);
+    //auto mul = mc->getIndexOfValue(1,MTYPE::CONST);
     auto mul2 = mc->getIndexOfValue(2,MTYPE::CONST);
 
     vm.push_back("JZERO " + std::to_string(vm.size() + 2));
@@ -1945,6 +1945,7 @@ void Coder::defineValueUnsinged(std::vector<string> & storeCode, long long value
 void Coder::defineValue(long long value){
    defineValue(vm,value);
 }
+
 
 void Coder::defineValue(std::vector<string> & storeCode, long long value){
     auto one = mc->getIndexOfValue(1,CONST);

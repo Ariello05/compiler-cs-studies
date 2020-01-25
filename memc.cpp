@@ -43,15 +43,7 @@ unsigned long long MemoryController::declareArray(string name, long long begin, 
     indexer += array.getSize()-1;
     blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(end) + ")"))));
     indexer++;
-    //std::cerr<<std::to_string(indexer)<<"|LAST\n";
-    /*
-    for(auto i = begin; i<=end; ++i){//TODO: better way to acomplish tihs
-        if(i == begin || i == end)
-            blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(MTYPE::ARRAY, name + "(" + std::to_string(i) + ")"))));//WE HOLD VARIABLE AT SOME INDEX
-        ++indexer;
-    }
-    arrays.insert(std::make_pair(name,Array(blockstart,begin,end)));
-    */
+
     return blockstart;
 }
 
@@ -475,7 +467,7 @@ void MemoryController::printUndefined(){
     const auto end = blocks.end();
     std::vector<string> vars;
     while(beg != end){
-        if(!beg->second->isDefined()){                                      //TODO: fix
+        if(!beg->second->isDefined()){                                      //TODO: array undef check can be fixed
             if(beg->second->getType() == SPECIAL || beg->second->getType() == ARRAY){
                 ++beg;
                 continue;

@@ -4,13 +4,18 @@
 
 enum ACCESS_TYPE {ASSIGNMENT, CALL};
 
-struct VarAccess{
+class VarAccess{
+    public://too small class for enc.
+
     ACCESS_TYPE type;
     string variableName;
     long long variableIndex;
 };
 
-
+/**
+    * Controls definitions inside loops 
+    * eg. If there is undef under 'if' which won't be defined in other 'if' it will throw error
+*/
 class LoopController{
     public:
         LoopController();
@@ -20,12 +25,10 @@ class LoopController{
         void enterIf();
         void finishIf();
         bool isInIfMode();
-        void terminate();//TODO: while break
+        void terminate();//obsolete
     private:
 
-        long long loopDepth;
+        long long loopDepth;//0 - no loops
         bool ifMode;
         std::vector<VarAccess> defs;
-        //ForLoopBlock flb;
-        //bool inKnown;//TODO: stack or vector to control depth recurrence
 };

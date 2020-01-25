@@ -17,7 +17,6 @@ enum MTYPE {ARRAY, VAR, CONST, AC, SPECIAL, ITERATOR};
 
 /**
  * Container for virtual machine memory blocks 
- * 
 */ 
 class MemBlock{
     public:
@@ -69,7 +68,7 @@ class MemBlock{
         return type;
     }
 
-    private:
+    private://too lazy for .cpp
 
     string name;
     long long value;
@@ -77,6 +76,9 @@ class MemBlock{
     bool isDef;
 };
 
+/**
+    * Holds info about iterator in forloopblock
+*/
 class ForLoopBlock{
     public:
     ForLoopBlock(string iterator, unsigned long long iteratorIndex, bool increasing, unsigned long long special = 0){
@@ -136,7 +138,7 @@ class ForLoopBlock{
         return specialIndex;
     }
 
-private:
+private://too lazy for .cpp
 
     bool special;// 1 TO t(a) requires to hold 2 values, iterator and special to hold value of t(a)
     string iterator;
@@ -152,8 +154,11 @@ private:
 
                 //ARRAY(CONST) is treated as variable
 enum IDENTIFIER {ARRAYVAR,CONSTVALUE,VARIABLE};
+/**
+    * Used in code as a stack with variables, helps determine types and gives neccessary info 
+*/
 class SmartBlock{//Helper
-    public:
+    public://too small class for private
     SmartBlock(IDENTIFIER type, unsigned long long value=0 , unsigned long long varName =0, unsigned long long arrayName = 0, string name = ""){
         this->type = type;
         switch(type){
