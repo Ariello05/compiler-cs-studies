@@ -22,6 +22,7 @@ class LoopController{
         void proccessAction(VarAccess va);
         void enterLoop();
         void finishLoop();
+        long long getLoopDepth();
         void enterIf();
         void finishIf();
         bool isInIfMode();

@@ -24,6 +24,11 @@ void LoopController::proccessAction(VarAccess va){
 
 }
 
+long long LoopController::getLoopDepth(){
+    return loopDepth;
+}
+
+
 void LoopController::enterLoop(){
     ++loopDepth;
 }

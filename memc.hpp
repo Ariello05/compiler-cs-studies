@@ -70,6 +70,7 @@ public:
     const string primary = ".Local1";
     const string secondary = ".Local2";
 
+    unsigned long long getRestrict();
     void freeRestrict();//helps with the problem of accessing yet undefined constants in certain cases
 
 private:

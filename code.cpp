@@ -1943,9 +1943,19 @@ void Coder::defineValueUnsinged(std::vector<string> & storeCode, long long value
 }
 
 void Coder::defineValue(long long value){
-   defineValue(vm,value);
+    //if(lc.getLoopDepth() >= 1){
+    //   decltype(vm) forward;
+    //    defineValue(forward, value);
+    //}else{
+        defineValue(vm,value);
+    //}
 }
 
+bool contains(string searched, string tosearch){
+    auto e = searched.find(tosearch);
+    if(e == std::string::npos) return false;
+    else return true;
+}
 
 void Coder::defineValue(std::vector<string> & storeCode, long long value){
     auto one = mc->getIndexOfValue(1,CONST);
@@ -2027,7 +2037,49 @@ void Coder::defineValue(std::vector<string> & storeCode, long long value){
         }
     }    
     mc->setValueIn(0,value);
+    
+/*
+    if(storeCode != vm){
+        if(mc->getRestrict() == 0){//didn;t use declare before define
+            auto id = mc->declareValue(value);
+            storeCode.push_back("STORE " + std::to_string(id));
+            vm.push_back("LOAD " + std::to_string(id));
+            vm.insert(vm.begin()+10,storeCode.begin(),storeCode.end());
+            //FIX JUMPS BLOCK
+            auto begin = vm.begin();
+            const auto end = vm.end();
+            while(begin != end){
+                if(contains(*begin,"JUMP ") || contains(*begin,"JPOS ") || contains(*begin, "JNEG ") || contains(*begin, "JZERO ")){   
+                    auto space = begin->find(" ");
+                    auto endstr = begin->substr(space+1,begin->size());
+                    if(endstr.size() >= 1){
+                        auto num = std::stoll(endstr);
+                        num += storeCode.size();
+                        begin->replace(space+1,begin->size(),std::to_string(num));
+                    }
+
+                }
+
+                ++begin;
+            }
+            //jumpstack
+            std::stack<long long> edit;//jump stack
+            while(!jumps.empty()){
+                auto val = jumps.top();
+                val += storeCode.size();
+                edit.push(val);
+                jumps.pop();
+            }
+            while(!edit.empty()){
+                jumps.push(edit.top());
+                edit.pop();
+            }
+
+        }
+    }
+*/
     mc->freeRestrict();
+
 }
 
 void Coder::incDepth(){
@@ -2039,6 +2091,7 @@ void Coder::decDepth(){
 }
 //JPOS
 //JNEG
+//JZERO
 //JUMP
 //ADD
 //SUB
@@ -2051,12 +2104,6 @@ void Coder::decDepth(){
 //GET
 //PUT
 //SHIFT
-
-bool contains(string searched, string tosearch){
-    auto e = searched.find(tosearch);
-    if(e == std::string::npos) return false;
-    else return true;
-}
 
 bool Coder::alreadyInAC(unsigned long long index){
     auto last = vm.back();

@@ -49,15 +49,17 @@ unsigned long long MemoryController::declareArray(string name, long long begin, 
 
 
 unsigned long long MemoryController::declareValue(long long value){
-    /*
+    
     auto beg = blocks.begin();
     const auto end = blocks.end();
 
     while(beg != end){
         try{
-            if(beg->second->getValue() == value)//VALUE ALREADY EXISTS
-            {
-                return beg->first;
+            if(beg->second->getType() == MTYPE::CONST){
+                if(beg->second->getValue() == value)//VALUE ALREADY EXISTS
+                {
+                    return beg->first;
+                }
             }
         }
         catch(...){
@@ -65,7 +67,7 @@ unsigned long long MemoryController::declareValue(long long value){
         }
         ++beg;
     }
-    */
+    
     blocks.insert(std::make_pair(indexer,std::make_shared<MemBlock>(MemBlock(value, MTYPE::CONST))));//WE HOLD VARIABLE AT SOME INDEX
     restr = indexer;
     ++indexer;
@@ -490,4 +492,8 @@ void MemoryController::printUndefined(){
 
 void MemoryController::freeRestrict(){
     restr = 0;
+}
+
+unsigned long long MemoryController::getRestrict(){
+    return restr;
 }
