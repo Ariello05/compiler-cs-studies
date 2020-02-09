@@ -28,4 +28,4 @@ For more details look into [specifications.pdf](https://github.com/Ariello05/com
 
 ## Authors
 * **Paweł Dychus** - *Compiler* - [Ariello05](https://github.com/Ariello05)
-* **Maciej Gębala** - *Specifications and virtual machine (maszyna wirtualna)*
+* **dr. Maciej Gębala** - *Specifications and virtual machine (maszyna wirtualna)*
