@@ -7,7 +7,7 @@ Compiler target as well as language are both defined by dr.Gębala, specificatio
 ### Built with:
 - [flex](https://github.com/westes/flex) - as lexer
 - [bison](https://www.gnu.org/software/bison/) - as parser 
-- [cln](https://www.ginac.de/CLN/) - virtual machine, cln version
+- [cln](https://www.ginac.de/CLN/) - used in virtual machine, cln version
 
 ## Usage
 Installation is straight forward (provided you have libs above), use
